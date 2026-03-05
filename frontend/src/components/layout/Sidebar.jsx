@@ -40,6 +40,7 @@ const navConfig = {
     accountant: [
         { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
         { label: 'Payments Queue', to: '/accountant/payments', icon: CheckCircle },
+        { label: 'Invoices', to: '/accountant/invoices', icon: Receipt },
     ],
 };
 
