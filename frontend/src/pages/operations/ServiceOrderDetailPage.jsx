@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
     ArrowLeft, Building2, Package, Calendar, User, Phone,
     Mail, RefreshCw, CheckSquare, FileText, Clock, AlertTriangle, X,
-    IndianRupee, CreditCard, Plus, Trash2, Link2, CheckCircle, ExternalLink
+    IndianRupee, CreditCard, Plus, Trash2, Link2, CheckCircle, ExternalLink, Banknote
 } from 'lucide-react';
 
 /* ─────────────── constants ─────────────── */
@@ -22,6 +22,9 @@ const STATUS_COLORS = {
 };
 const PAYMENT_METHODS = ['cash', 'bank_transfer', 'upi', 'cheque', 'other'];
 const PAYMENT_METHOD_LABELS = { cash: 'Cash', bank_transfer: 'Bank Transfer', upi: 'UPI', cheque: 'Cheque', other: 'Other' };
+const EXPENSE_CATEGORIES = ['vendor', 'govt_fee', 'service_charge', 'gst', 'transportation', 'miscellaneous', 'other'];
+const EXPENSE_CATEGORY_LABELS = { vendor: 'Vendor', govt_fee: 'Govt Fee', service_charge: 'Service Charge', gst: 'GST', transportation: 'Transportation', miscellaneous: 'Miscellaneous', other: 'Other' };
+const EXPENSE_CATEGORY_COLORS = { vendor: '#6366f1', govt_fee: '#0891b2', service_charge: '#7c3aed', gst: '#d97706', transportation: '#059669', miscellaneous: '#64748b', other: '#94a3b8' };
 const PAYMENT_STATUS_META = {
     unpaid: { color: '#c62828', bg: '#ffebee', label: 'Unpaid' },
     partial: { color: '#f57c00', bg: '#fff3e0', label: 'Partially Paid' },
@@ -70,9 +73,15 @@ export default function ServiceOrderDetailPage() {
     const [payForm, setPayForm] = useState({ amount: '', method: 'bank_transfer', reference_no: '', note: '', paid_at: new Date().toISOString().slice(0, 10) });
     const [addingPayment, setAddingPayment] = useState(false);
 
+    // Expense modal
+    const [expenseModal, setExpenseModal] = useState(false);
+    const [expForm, setExpForm] = useState({ category: 'vendor', description: '', amount: '', date: new Date().toISOString().slice(0, 10), notes: '' });
+    const [addingExpense, setAddingExpense] = useState(false);
+
     const canManage = ['admin', 'manager'].includes(user.role);
     const canAddPayment = ['admin', 'manager', 'sales'].includes(user.role);
     const canApprovePayment = ['admin', 'accountant'].includes(user.role);
+    const canAddExpense = ['admin', 'manager', 'operations'].includes(user.role);
     const isSales = user.role === 'sales';
 
     const loadAll = async () => {
@@ -163,6 +172,29 @@ export default function ServiceOrderDetailPage() {
             toast.success('Payment rejected');
             loadAll();
         } catch (e) { toast.error(e.response?.data?.message || 'Failed to reject'); }
+    };
+
+    const doAddExpense = async (e) => {
+        e.preventDefault();
+        if (!expForm.amount || Number(expForm.amount) <= 0) { toast.error('Enter a valid amount'); return; }
+        setAddingExpense(true);
+        try {
+            await api.post(`/service-orders/${id}/expenses`, expForm);
+            toast.success('Expense recorded');
+            setExpenseModal(false);
+            setExpForm({ category: 'vendor', description: '', amount: '', date: new Date().toISOString().slice(0, 10), notes: '' });
+            loadAll();
+        } catch (e) { toast.error(e.response?.data?.message || 'Failed to record expense'); }
+        finally { setAddingExpense(false); }
+    };
+
+    const doDeleteExpense = async (eid) => {
+        if (!window.confirm('Delete this expense?')) return;
+        try {
+            await api.delete(`/service-orders/${id}/expenses/${eid}`);
+            toast.success('Expense deleted');
+            loadAll();
+        } catch (e) { toast.error(e.response?.data?.message || 'Failed to delete expense'); }
     };
 
     const toggleTask = async (taskId, done) => {
@@ -393,6 +425,77 @@ export default function ServiceOrderDetailPage() {
                             </>
                         )}
                     </div>
+
+                    {/* ── EXPENSES SECTION ── */}
+                    {canAddExpense && (() => {
+                        const expenses = order.expenses || [];
+                        const approvedTotal = (order.payments || []).filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+                        const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+                        const available = approvedTotal - totalExpenses;
+                        return (
+                            <div className="card">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div className="section-title" style={{ margin: 0 }}>Expenses</div>
+                                        {approvedTotal > 0 && (
+                                            <span style={{
+                                                fontSize: 11, padding: '2px 9px', borderRadius: 999, fontWeight: 700,
+                                                background: available < 0 ? '#fee2e2' : '#d1fae5',
+                                                color: available < 0 ? '#991b1b' : '#065f46'
+                                            }}>
+                                                {available < 0 ? '⚠ Over budget' : `₹${available.toLocaleString('en-IN')} available`}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button className="btn btn-ghost btn-sm" style={{ gap: 5 }} onClick={() => setExpenseModal(true)}>
+                                        <Plus size={12} /> Add Expense
+                                    </button>
+                                </div>
+
+                                {approvedTotal === 0 && (
+                                    <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#92400e', marginBottom: 12 }}>
+                                        ⚠ No approved payments yet. Expenses can only be recorded against verified payment amounts.
+                                    </div>
+                                )}
+
+                                {expenses.length === 0 ? (
+                                    <div className="empty" style={{ padding: '20px 0' }}>
+                                        <Banknote size={28} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.2 }} />
+                                        <p>No expenses recorded yet</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 80px 36px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                                            {['Category', 'Description', 'Amount', 'By', ''].map(h => (
+                                                <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
+                                            ))}
+                                        </div>
+                                        {expenses.map((e, i) => (
+                                            <div key={e._id} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 80px 36px', gap: 8, padding: '10px 0', borderBottom: i < expenses.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                                                <div>
+                                                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: `${EXPENSE_CATEGORY_COLORS[e.category]}20`, color: EXPENSE_CATEGORY_COLORS[e.category] }}>
+                                                        {EXPENSE_CATEGORY_LABELS[e.category] || e.category}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: 13, fontWeight: 500 }}>{e.description || '—'}</div>
+                                                    {e.notes && <div style={{ fontSize: 11, color: 'var(--ink-3)', fontStyle: 'italic' }}>{e.notes}</div>}
+                                                    <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                </div>
+                                                <div style={{ fontWeight: 700, fontSize: 14, color: '#c62828' }}>{fmt(e.amount)}</div>
+                                                <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{e.recorded_by?.name || '—'}</div>
+                                                <div>{canManage && <button className="icon-btn" title="Delete" style={{ color: '#c62828' }} onClick={() => doDeleteExpense(e._id)}><Trash2 size={12} /></button>}</div>
+                                            </div>
+                                        ))}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 12, borderTop: '2px solid var(--border)', marginTop: 4, gap: 16, fontSize: 13, fontWeight: 700 }}>
+                                            <span>Total Expenses:</span>
+                                            <span style={{ color: '#c62828' }}>{fmt(totalExpenses)}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                     {/* Tasks */}
                     <div className="card">
@@ -660,6 +763,66 @@ export default function ServiceOrderDetailPage() {
                                 <button type="button" className="btn btn-outline" onClick={() => setPaymentModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary" disabled={addingPayment || !payForm.amount}>
                                     {addingPayment ? 'Saving…' : '✓ Record Payment'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── EXPENSE MODAL ── */}
+            {expenseModal && (
+                <div className="modal-overlay" onClick={() => setExpenseModal(false)}>
+                    <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <span className="modal-title">💸 Record Expense</span>
+                            <button className="icon-btn" onClick={() => setExpenseModal(false)}><X size={14} /></button>
+                        </div>
+                        {(() => {
+                            const approvedTotal = (order.payments || []).filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+                            const totalExpenses = (order.expenses || []).reduce((s, e) => s + e.amount, 0);
+                            const available = approvedTotal - totalExpenses;
+                            return (
+                                <div style={{ display: 'flex', gap: 16, padding: '8px 0 12px', borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
+                                    <div style={{ fontSize: 12 }}>Approved Funds: <strong style={{ color: '#2e7d32' }}>{fmt(approvedTotal)}</strong></div>
+                                    <div style={{ fontSize: 12 }}>Used: <strong style={{ color: '#c62828' }}>{fmt(totalExpenses)}</strong></div>
+                                    <div style={{ fontSize: 12 }}>Available: <strong style={{ color: available < 0 ? '#c62828' : '#2e7d32' }}>{fmt(available)}</strong></div>
+                                </div>
+                            );
+                        })()}
+                        <form onSubmit={doAddExpense}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Category *</label>
+                                    <select className="form-input" value={expForm.category} onChange={e => setExpForm(f => ({ ...f, category: e.target.value }))}>
+                                        {EXPENSE_CATEGORIES.map(c => (
+                                            <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS[c]}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Amount (₹) *</label>
+                                    <input className="form-input" type="number" min={1} step="0.01" required
+                                        value={expForm.amount} onChange={e => setExpForm(f => ({ ...f, amount: e.target.value }))}
+                                        placeholder="0.00" />
+                                </div>
+                                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                    <label className="form-label">Description</label>
+                                    <input className="form-input" value={expForm.description} onChange={e => setExpForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description of expenditure" />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Date</label>
+                                    <input className="form-input" type="date" value={expForm.date} onChange={e => setExpForm(f => ({ ...f, date: e.target.value }))} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Notes</label>
+                                    <input className="form-input" value={expForm.notes} onChange={e => setExpForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional details" />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8 }}>
+                                <button type="button" className="btn btn-outline" onClick={() => setExpenseModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={addingExpense || !expForm.amount}>
+                                    {addingExpense ? 'Saving…' : '✓ Record Expense'}
                                 </button>
                             </div>
                         </form>

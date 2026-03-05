@@ -19,6 +19,22 @@ const paymentSchema = new mongoose.Schema({
     rejection_reason: { type: String, default: '' },
 }, { timestamps: true });
 
+const EXPENSE_CATEGORIES = [
+    'vendor', 'govt_fee', 'service_charge', 'gst',
+    'transportation', 'miscellaneous', 'other'
+];
+
+const expenseSchema = new mongoose.Schema({
+    category: { type: String, enum: EXPENSE_CATEGORIES, required: true },
+    description: { type: String, default: '' },
+    amount: { type: Number, required: true, min: 0 },
+    recorded_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    date: { type: Date, default: Date.now },
+    notes: { type: String, default: '' },
+}, { timestamps: true });
+
+module.exports.EXPENSE_CATEGORIES = EXPENSE_CATEGORIES;
+
 const serviceOrderSchema = new mongoose.Schema({
     client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     package: { type: mongoose.Schema.Types.ObjectId, ref: 'Package', required: true },
@@ -31,6 +47,7 @@ const serviceOrderSchema = new mongoose.Schema({
     amount_paid: { type: Number, default: 0 },          // auto-computed
     balance_due: { type: Number, default: 0 },          // auto-computed
     payment_status: { type: String, enum: ['unpaid', 'partial', 'paid'], default: 'unpaid' },
+    expenses: { type: [expenseSchema], default: [] },   // operational expenses
 
     // Project notes
     project_notes: { type: String, default: '' },

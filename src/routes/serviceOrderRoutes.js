@@ -4,6 +4,7 @@ const {
     getServiceOrders, getServiceOrder, createServiceOrder, updateServiceOrder,
     updateStatus, assignServiceOrder, getServiceOrderActivity,
     addPayment, deletePayment, approvePayment, rejectPayment,
+    addExpense, deleteExpense,
 } = require('../controllers/serviceOrderController');
 const { createTask, getTasks, updateTask } = require('../controllers/taskController');
 const { getDocuments, uploadDocument, deleteDocument } = require('../controllers/documentController');
@@ -45,5 +46,9 @@ router.route('/:id/documents')
     .get(authorize('admin', 'manager', 'operations', 'sales', 'accountant'), getDocuments)
     .post(authorize('admin', 'manager', 'operations'), upload.single('file'), uploadDocument);
 router.delete('/:id/documents/:docId', authorize('admin', 'manager'), deleteDocument);
+
+// Expenses
+router.post('/:id/expenses', authorize('admin', 'manager', 'operations'), addExpense);
+router.delete('/:id/expenses/:eid', authorize('admin', 'manager'), deleteExpense);
 
 module.exports = router;

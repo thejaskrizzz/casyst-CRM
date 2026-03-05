@@ -301,3 +301,57 @@ exports.getServiceOrderActivity = async (req, res, next) => {
         res.json({ success: true, data: logs });
     } catch (err) { next(err); }
 };
+
+/* ──────────── ADD expense ──────────── */
+exports.addExpense = async (req, res, next) => {
+    try {
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const { category, description, amount, date, notes } = req.body;
+        if (!category || !amount) return res.status(400).json({ success: false, message: 'Category and amount are required' });
+
+        // Enforce cap: total expenses cannot exceed the total approved payment amount
+        const approvedTotal = order.payments
+            .filter(p => p.status === 'approved')
+            .reduce((s, p) => s + (p.amount || 0), 0);
+        const currentExpenses = order.expenses.reduce((s, e) => s + (e.amount || 0), 0);
+        if (currentExpenses + Number(amount) > approvedTotal) {
+            return res.status(400).json({
+                success: false,
+                message: `Expense exceeds available verified funds. Available: ₹${(approvedTotal - currentExpenses).toFixed(2)}`
+            });
+        }
+
+        order.expenses.push({
+            category, description, amount: Number(amount),
+            date: date || new Date(),
+            notes,
+            recorded_by: req.user._id,
+        });
+        await order.save();
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'expense_added', performed_by: req.user._id, description: `Expense of ₹${amount} added under "${category}"` });
+
+        const populated = await ServiceOrder.findById(order._id).populate('expenses.recorded_by', 'name');
+        res.status(201).json({ success: true, data: populated.expenses, message: 'Expense recorded' });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── DELETE expense ──────────── */
+exports.deleteExpense = async (req, res, next) => {
+    try {
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const eidx = order.expenses.findIndex(e => e._id.toString() === req.params.eid);
+        if (eidx === -1) return res.status(404).json({ success: false, message: 'Expense not found' });
+
+        const deleted = order.expenses[eidx];
+        order.expenses.splice(eidx, 1);
+        await order.save();
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'expense_deleted', performed_by: req.user._id, description: `Expense of ₹${deleted.amount} deleted` });
+        res.json({ success: true, message: 'Expense deleted' });
+    } catch (err) { next(err); }
+};
