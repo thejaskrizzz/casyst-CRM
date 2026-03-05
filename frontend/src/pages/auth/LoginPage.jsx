@@ -8,6 +8,7 @@ const roleRedirect = {
     manager: '/manager/dashboard',
     sales: '/sales/dashboard',
     operations: '/operations/dashboard',
+    accountant: '/accountant/dashboard',
 };
 
 const demos = [
@@ -15,6 +16,7 @@ const demos = [
     { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
     { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
     { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
+    { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
 ];
 
 export default function LoginPage() {
@@ -75,7 +77,7 @@ export default function LoginPage() {
 
                 {/* Bottom role pills */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {['Admin', 'Manager', 'Sales', 'Operations'].map(r => (
+                    {['Admin', 'Manager', 'Sales', 'Operations', 'Accountant'].map(r => (
                         <span key={r} style={{
                             padding: '4px 12px', borderRadius: 999,
                             background: 'rgba(255,255,255,0.1)',
