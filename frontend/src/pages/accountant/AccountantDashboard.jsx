@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, XCircle, Clock, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, DollarSign, TrendingUp, AlertTriangle, FileDown } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { generateInvoice } from '../../utils/generateInvoice';
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -26,12 +27,17 @@ export default function AccountantDashboard() {
     const [rejectModal, setRejectModal] = useState(null); // { orderId, paymentId, amount }
     const [rejectReason, setRejectReason] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [settings, setSettings] = useState(null);
 
     const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
-            const { data } = await api.get('/service-orders?limit=200');
-            setOrders(data.data || []);
+            const [ordersRes, settingsRes] = await Promise.all([
+                api.get('/service-orders?limit=200'),
+                api.get('/settings'),
+            ]);
+            setOrders(ordersRes.data.data || []);
+            setSettings(settingsRes.data.data);
         } catch {
             toast.error('Failed to load service orders');
         } finally {
@@ -166,14 +172,14 @@ export default function AccountantDashboard() {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg)' }}>
-                                {['Client', 'Amount', 'Status', 'Method', 'Added By', 'Reviewed By', 'Date'].map(h => (
+                                {['Client', 'Amount', 'Status', 'Method', 'Added By', 'Reviewed By', 'Date', ''].map(h => (
                                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {allPayments.length === 0 ? (
-                                <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-3)' }}>No payments recorded yet</td></tr>
+                                <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--ink-3)' }}>No payments recorded yet</td></tr>
                             ) : allPayments.map(p => (
                                 <tr key={p._id} style={{ borderTop: '1px solid var(--border)' }}>
                                     <td style={{ padding: '12px 16px', fontSize: 13 }}>{p.order.client?.company_name || '—'}</td>
@@ -186,6 +192,18 @@ export default function AccountantDashboard() {
                                         {p.rejection_reason && <div style={{ fontSize: 11, color: '#ef4444' }}>"{p.rejection_reason}"</div>}
                                     </td>
                                     <td style={{ padding: '12px 16px', fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(p.paid_at)}</td>
+                                    <td style={{ padding: '12px 16px' }}>
+                                        {p.status === 'approved' && (
+                                            <button
+                                                className="btn btn-ghost btn-sm"
+                                                style={{ fontSize: 11, gap: 4, whiteSpace: 'nowrap' }}
+                                                onClick={() => generateInvoice(p, p.order, settings)}
+                                                title="Download Invoice"
+                                            >
+                                                <FileDown size={13} /> Invoice
+                                            </button>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

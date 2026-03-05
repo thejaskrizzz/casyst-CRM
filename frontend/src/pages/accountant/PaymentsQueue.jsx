@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, XCircle, Clock, DollarSign } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, DollarSign, FileDown } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { generateInvoice } from '../../utils/generateInvoice';
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -12,12 +13,17 @@ export default function PaymentsQueue() {
     const [rejectModal, setRejectModal] = useState(null);
     const [rejectReason, setRejectReason] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [settings, setSettings] = useState(null);
 
     const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
-            const { data } = await api.get('/service-orders?limit=200');
-            setOrders(data.data || []);
+            const [ordersRes, settingsRes] = await Promise.all([
+                api.get('/service-orders?limit=200'),
+                api.get('/settings'),
+            ]);
+            setOrders(ordersRes.data.data || []);
+            setSettings(settingsRes.data.data);
         } catch {
             toast.error('Failed to load payments');
         } finally {
@@ -31,6 +37,7 @@ export default function PaymentsQueue() {
         (order.payments || []).map(p => ({ ...p, order }))
     );
     const pending = allPayments.filter(p => p.status === 'pending');
+    const approved = allPayments.filter(p => p.status === 'approved');
     const pendingValue = pending.reduce((s, p) => s + p.amount, 0);
 
     const handleApprove = async (orderId, paymentId) => {
@@ -138,6 +145,51 @@ export default function PaymentsQueue() {
                     </div>
                 )}
             </div>
+
+            {/* Approved Payments — Invoice Download */}
+            {approved.length > 0 && (
+                <div className="card" style={{ padding: 0, marginTop: 24 }}>
+                    <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CheckCircle size={16} color="#10b981" />
+                        <h2 style={{ fontSize: 15, fontWeight: 600 }}>Approved Payments — Download Invoices ({approved.length})</h2>
+                    </div>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: 'var(--bg)' }}>
+                                    {['Client / Package', 'Amount', 'Method', 'Reference', 'Approved By', 'Date', 'Invoice'].map(h => (
+                                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.4px', whiteSpace: 'nowrap' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {approved.map((p) => (
+                                    <tr key={p._id} style={{ borderTop: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '12px 16px' }}>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{p.order.client?.company_name || '—'}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.order.package?.name || '—'}</div>
+                                        </td>
+                                        <td style={{ padding: '12px 16px', fontWeight: 700, color: '#10b981' }}>{fmt(p.amount)}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13, textTransform: 'capitalize' }}>{p.method?.replace('_', ' ')}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--ink-3)', fontFamily: 'monospace' }}>{p.reference_no || '—'}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13 }}>{p.approved_by?.name || '—'}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(p.approved_at || p.paid_at)}</td>
+                                        <td style={{ padding: '12px 16px' }}>
+                                            <button
+                                                className="btn btn-primary"
+                                                style={{ fontSize: 12, padding: '5px 14px', gap: 5 }}
+                                                onClick={() => generateInvoice(p, p.order, settings)}
+                                            >
+                                                <FileDown size={13} /> Download
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Reject Modal */}
             {rejectModal && (
