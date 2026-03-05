@@ -182,6 +182,30 @@ export default function ServiceOrderDetailPage() {
     const paidPct = pct(order.amount_paid, order.project_value);
     const pmeta = PAYMENT_STATUS_META[order.payment_status || 'unpaid'];
 
+    // Payment verification status (derived from payment approval states)
+    const payments = order.payments || [];
+    const approvedPayments = payments.filter(p => p.status === 'approved');
+    const pendingPayments = payments.filter(p => p.status === 'pending');
+    const lastApprover = approvedPayments.length > 0
+        ? approvedPayments.slice(-1)[0]?.approved_by?.name
+        : null;
+    const verificationStatus = payments.length === 0
+        ? null
+        : approvedPayments.length === payments.length
+            ? 'full'
+            : approvedPayments.length > 0
+                ? 'partial'
+                : pendingPayments.length > 0
+                    ? 'pending'
+                    : 'rejected';
+    const verificationMeta = {
+        full: { label: '✓ Fully Verified', color: '#065f46', bg: '#d1fae5', border: '#6ee7b7' },
+        partial: { label: '~ Partially Verified', color: '#92400e', bg: '#fef3c7', border: '#fcd34d' },
+        pending: { label: '⏳ Awaiting Verification', color: '#1e40af', bg: '#dbeafe', border: '#93c5fd' },
+        rejected: { label: '✕ Payments Rejected', color: '#991b1b', bg: '#fee2e2', border: '#fca5a5' },
+    };
+    const canSeeVerification = ['admin', 'manager', 'operations'].includes(user.role);
+
     return (
         <div style={{ paddingBottom: 40 }}>
             {/* ── HEADER ── */}
@@ -232,6 +256,20 @@ export default function ServiceOrderDetailPage() {
                                 <div style={{ fontSize: 20, fontWeight: 800, color: order.balance_due > 0 ? '#c62828' : '#2e7d32', letterSpacing: '-0.5px' }}>{fmt(order.balance_due)}</div>
                             </div>
                         </div>
+                        {/* Verification badge */}
+                        {canSeeVerification && verificationStatus && (() => {
+                            const vm = verificationMeta[verificationStatus];
+                            return (
+                                <div style={{ background: vm.bg, border: `1px solid ${vm.border}`, borderRadius: 10, padding: '8px 14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 170 }}>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: vm.color }}>{vm.label}</span>
+                                    <span style={{ fontSize: 10, color: vm.color, opacity: 0.75, marginTop: 2 }}>
+                                        {verificationStatus === 'full' || verificationStatus === 'partial'
+                                            ? `${approvedPayments.length}/${payments.length} approved${lastApprover ? ` · by ${lastApprover}` : ''}`
+                                            : `${pendingPayments.length} payment${pendingPayments.length !== 1 ? 's' : ''} pending review`}
+                                    </span>
+                                </div>
+                            );
+                        })()}
                         {canAddPayment && (
                             <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => setPaymentModal(true)}>
                                 <Plus size={13} /> Add Payment
