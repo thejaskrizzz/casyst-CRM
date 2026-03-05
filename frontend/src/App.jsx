@@ -34,6 +34,7 @@ import ServiceOrderDetailPage from './pages/operations/ServiceOrderDetailPage';
 
 // Accountant
 import AccountantDashboard from './pages/accountant/AccountantDashboard';
+import PaymentsQueue from './pages/accountant/PaymentsQueue';
 
 const Unauthorized = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
@@ -110,7 +111,7 @@ export default function App() {
           {/* Accountant */}
           <Route path="/accountant" element={<ProtectedRoute roles={['accountant']}><Layout /></ProtectedRoute>}>
             <Route path="dashboard" element={<AccountantDashboard />} />
-            <Route path="payments" element={<AccountantDashboard />} />
+            <Route path="payments" element={<PaymentsQueue />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
