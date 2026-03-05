@@ -31,6 +31,7 @@ import QuoteDetailPage from './pages/sales/QuoteDetailPage';
 import OperationsDashboard from './pages/operations/OperationsDashboard';
 import ServiceOrdersListPage from './pages/operations/ServiceOrdersListPage';
 import ServiceOrderDetailPage from './pages/operations/ServiceOrderDetailPage';
+import ExpensesPage from './pages/operations/ExpensesPage';
 
 // Accountant
 import AccountantDashboard from './pages/accountant/AccountantDashboard';
@@ -106,6 +107,7 @@ export default function App() {
             <Route path="dashboard" element={<OperationsDashboard />} />
             <Route path="service-orders" element={<ServiceOrdersListPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
+            <Route path="expenses" element={<ExpensesPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

@@ -36,6 +36,7 @@ const navConfig = {
     operations: [
         { label: 'Dashboard', to: '/operations/dashboard', icon: LayoutDashboard },
         { label: 'Service Orders', to: '/operations/service-orders', icon: Briefcase },
+        { label: 'Expenses', to: '/operations/expenses', icon: Receipt },
     ],
     accountant: [
         { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
