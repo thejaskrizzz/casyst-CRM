@@ -72,6 +72,7 @@ export default function ServiceOrderDetailPage() {
 
     const canManage = ['admin', 'manager'].includes(user.role);
     const canAddPayment = ['admin', 'manager', 'sales'].includes(user.role);
+    const canApprovePayment = ['admin', 'accountant'].includes(user.role);
     const isSales = user.role === 'sales';
 
     const loadAll = async () => {
@@ -129,7 +130,7 @@ export default function ServiceOrderDetailPage() {
         e.preventDefault(); setAddingPayment(true);
         try {
             await api.post(`/service-orders/${id}/payments`, payForm);
-            toast.success('Payment recorded');
+            toast.success('Payment submitted — awaiting accountant approval');
             setPaymentModal(false);
             setPayForm({ amount: '', method: 'bank_transfer', reference_no: '', note: '', paid_at: new Date().toISOString().slice(0, 10) });
             loadAll();
@@ -144,6 +145,24 @@ export default function ServiceOrderDetailPage() {
             toast.success('Payment removed');
             loadAll();
         } catch { toast.error('Failed to delete payment'); }
+    };
+
+    const doApprovePayment = async (pid) => {
+        try {
+            await api.patch(`/service-orders/${id}/payments/${pid}/approve`);
+            toast.success('Payment approved ✓');
+            loadAll();
+        } catch (e) { toast.error(e.response?.data?.message || 'Failed to approve'); }
+    };
+
+    const doRejectPayment = async (pid) => {
+        const reason = window.prompt('Reason for rejection:');
+        if (!reason) return;
+        try {
+            await api.patch(`/service-orders/${id}/payments/${pid}/reject`, { rejection_reason: reason });
+            toast.success('Payment rejected');
+            loadAll();
+        } catch (e) { toast.error(e.response?.data?.message || 'Failed to reject'); }
     };
 
     const toggleTask = async (taskId, done) => {
@@ -290,34 +309,44 @@ export default function ServiceOrderDetailPage() {
                         ) : (
                             <>
                                 {/* Header */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 100px 36px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
-                                    {['Date', 'Method', 'Amount', 'Recorded By', ''].map(h => (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 105px 90px 90px 36px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                                    {['Date', 'Method', 'Amount', 'By', 'Status', ''].map(h => (
                                         <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
                                     ))}
                                 </div>
-                                {order.payments.map((p, i) => (
-                                    <div key={p._id} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 110px 100px 36px', gap: 8, padding: '10px 0', borderBottom: i < order.payments.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
-                                        <div>
-                                            <div style={{ fontSize: 12, fontWeight: 600 }}>{new Date(p.paid_at || p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                                            {p.reference_no && <div style={{ fontSize: 10, color: 'var(--ink-3)' }}>Ref: {p.reference_no}</div>}
-                                            {p.note && <div style={{ fontSize: 10, color: 'var(--ink-3)', fontStyle: 'italic' }}>{p.note}</div>}
+                                {order.payments.map((p, i) => {
+                                    const psMeta = {
+                                        pending: { label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
+                                        approved: { label: 'Approved', color: '#10b981', bg: '#d1fae5' },
+                                        rejected: { label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
+                                    };
+                                    const ps = psMeta[p.status] || psMeta.pending;
+                                    return (
+                                        <div key={p._id} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 105px 90px 90px 36px', gap: 8, padding: '10px 0', borderBottom: i < order.payments.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'start' }}>
+                                            <div>
+                                                <div style={{ fontSize: 12, fontWeight: 600 }}>{new Date(p.paid_at || p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                {p.reference_no && <div style={{ fontSize: 10, color: 'var(--ink-3)' }}>Ref: {p.reference_no}</div>}
+                                                {p.note && <div style={{ fontSize: 10, color: 'var(--ink-3)', fontStyle: 'italic' }}>{p.note}</div>}
+                                            </div>
+                                            <div><span style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', fontSize: 11, fontWeight: 600, textTransform: 'capitalize' }}>{PAYMENT_METHOD_LABELS[p.method] || p.method}</span></div>
+                                            <div style={{ fontWeight: 700, fontSize: 14, color: p.status === 'approved' ? '#2e7d32' : '#aaa' }}>{fmt(p.amount)}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.recorded_by?.name || '—'}</div>
+                                            <div>
+                                                <span style={{ background: ps.bg, color: ps.color, borderRadius: 6, padding: '2px 7px', fontSize: 10, fontWeight: 700 }}>{ps.label}</span>
+                                                {p.status === 'rejected' && p.rejection_reason && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 2 }}>"{p.rejection_reason}"</div>}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                {canApprovePayment && p.status === 'pending' && (
+                                                    <>
+                                                        <button className="icon-btn" title="Approve" style={{ color: '#10b981' }} onClick={() => doApprovePayment(p._id)}>✓</button>
+                                                        <button className="icon-btn" title="Reject" style={{ color: '#ef4444' }} onClick={() => doRejectPayment(p._id)}>✕</button>
+                                                    </>
+                                                )}
+                                                {canManage && <button className="icon-btn" title="Delete" onClick={() => doDeletePayment(p._id)} style={{ color: '#c62828' }}><Trash2 size={12} /></button>}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span style={{ padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', fontSize: 11, fontWeight: 600, textTransform: 'capitalize' }}>
-                                                {PAYMENT_METHOD_LABELS[p.method] || p.method}
-                                            </span>
-                                        </div>
-                                        <div style={{ fontWeight: 700, fontSize: 14, color: '#2e7d32' }}>{fmt(p.amount)}</div>
-                                        <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.recorded_by?.name || '—'}</div>
-                                        <div>
-                                            {canManage && (
-                                                <button className="icon-btn" title="Delete payment" onClick={() => doDeletePayment(p._id)} style={{ color: '#c62828' }}>
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {/* Total row */}
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 12, borderTop: '2px solid var(--border)', marginTop: 4, gap: 16, fontSize: 13, fontWeight: 700 }}>
                                     <span>Total Paid:</span>

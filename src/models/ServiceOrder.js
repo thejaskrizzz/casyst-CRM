@@ -12,6 +12,11 @@ const paymentSchema = new mongoose.Schema({
     note: { type: String, default: '' },
     recorded_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     paid_at: { type: Date, default: Date.now },
+    // Accountant approval workflow
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    approved_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    approved_at: { type: Date, default: null },
+    rejection_reason: { type: String, default: '' },
 }, { timestamps: true });
 
 const serviceOrderSchema = new mongoose.Schema({
@@ -50,9 +55,11 @@ const serviceOrderSchema = new mongoose.Schema({
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
-// Auto-recompute payment fields before save
+// Auto-recompute payment fields before save (only approved payments count)
 serviceOrderSchema.pre('save', async function () {
-    const paid = this.payments.reduce((s, p) => s + (p.amount || 0), 0);
+    const paid = this.payments
+        .filter(p => p.status === 'approved')
+        .reduce((s, p) => s + (p.amount || 0), 0);
     this.amount_paid = paid;
     this.balance_due = Math.max(0, (this.project_value || 0) - paid);
     if (paid <= 0) this.payment_status = 'unpaid';

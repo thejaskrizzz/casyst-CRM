@@ -23,6 +23,7 @@ export const RoleRedirect = () => {
         manager: '/manager/dashboard',
         sales: '/sales/dashboard',
         operations: '/operations/dashboard',
+        accountant: '/accountant/dashboard',
     };
     return <Navigate to={redirectMap[user.role] || '/login'} replace />;
 };

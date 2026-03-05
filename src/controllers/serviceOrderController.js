@@ -203,7 +203,7 @@ exports.assignServiceOrder = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-/* ──────────── ADD payment ──────────── */
+/* ──────────── ADD payment (saved as pending — awaits accountant approval) ──────────── */
 exports.addPayment = async (req, res, next) => {
     try {
         const { amount, method, reference_no, note, paid_at } = req.body;
@@ -212,13 +212,64 @@ exports.addPayment = async (req, res, next) => {
         const order = await ServiceOrder.findById(req.params.id);
         if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
 
-        order.payments.push({ amount, method: method || 'bank_transfer', reference_no, note, recorded_by: req.user._id, paid_at: paid_at || new Date() });
-        await order.save(); // pre-save hook recalculates
+        order.payments.push({
+            amount, method: method || 'bank_transfer', reference_no, note,
+            recorded_by: req.user._id, paid_at: paid_at || new Date(),
+            status: 'pending',
+        });
+        await order.save();
 
-        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'payment_added', performed_by: req.user._id, description: `Payment of ₹${amount} recorded (${method || 'bank_transfer'})` });
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'payment_added', performed_by: req.user._id, description: `Payment of ₹${amount} submitted for approval (${method || 'bank_transfer'})` });
 
-        const populated = await ServiceOrder.findById(order._id).populate('payments.recorded_by', 'name');
-        res.status(201).json({ success: true, data: populated, message: `Payment of ₹${amount} recorded` });
+        const populated = await ServiceOrder.findById(order._id).populate('payments.recorded_by', 'name').populate('payments.approved_by', 'name');
+        res.status(201).json({ success: true, data: populated, message: `Payment of ₹${amount} submitted — awaiting accountant approval` });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── APPROVE payment ──────────── */
+exports.approvePayment = async (req, res, next) => {
+    try {
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const payment = order.payments.id(req.params.pid);
+        if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
+        if (payment.status !== 'pending') return res.status(400).json({ success: false, message: `Payment is already ${payment.status}` });
+
+        payment.status = 'approved';
+        payment.approved_by = req.user._id;
+        payment.approved_at = new Date();
+        payment.rejection_reason = '';
+        await order.save(); // pre-save hook recalculates totals
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'payment_approved', performed_by: req.user._id, description: `Payment of ₹${payment.amount} approved` });
+
+        const populated = await ServiceOrder.findById(order._id).populate('payments.recorded_by', 'name').populate('payments.approved_by', 'name');
+        res.json({ success: true, data: populated, message: `Payment of ₹${payment.amount} approved` });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── REJECT payment ──────────── */
+exports.rejectPayment = async (req, res, next) => {
+    try {
+        const { rejection_reason } = req.body;
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const payment = order.payments.id(req.params.pid);
+        if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
+        if (payment.status !== 'pending') return res.status(400).json({ success: false, message: `Payment is already ${payment.status}` });
+
+        payment.status = 'rejected';
+        payment.approved_by = req.user._id;
+        payment.approved_at = new Date();
+        payment.rejection_reason = rejection_reason || 'No reason provided';
+        await order.save();
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'payment_rejected', performed_by: req.user._id, description: `Payment of ₹${payment.amount} rejected: ${rejection_reason || 'No reason'}` });
+
+        const populated = await ServiceOrder.findById(order._id).populate('payments.recorded_by', 'name').populate('payments.approved_by', 'name');
+        res.json({ success: true, data: populated, message: `Payment rejected` });
     } catch (err) { next(err); }
 };
 

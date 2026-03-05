@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     LayoutDashboard, Users, Package, TrendingUp, Briefcase,
-    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award
+    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award, CheckCircle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
@@ -36,6 +36,10 @@ const navConfig = {
     operations: [
         { label: 'Dashboard', to: '/operations/dashboard', icon: LayoutDashboard },
         { label: 'Service Orders', to: '/operations/service-orders', icon: Briefcase },
+    ],
+    accountant: [
+        { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
+        { label: 'Payments Queue', to: '/accountant/payments', icon: CheckCircle },
     ],
 };
 

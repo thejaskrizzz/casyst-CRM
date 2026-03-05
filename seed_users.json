@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Admin User",
+    "email": "admin@casyst.com",
+    "phone": "9000000001",
+    "password": "$2b$12$J6mB6h5KIW5RyUGlBY98IeGZZY5sGioGgqBXALzBXjMU1ysGWdoCO",
+    "role": "admin",
+    "status": "active",
+    "refresh_tokens": [],
+    "createdAt": "2026-03-05T17:10:36.728Z",
+    "updatedAt": "2026-03-05T17:10:36.728Z",
+    "__v": 0
+  },
+  {
+    "name": "Rajesh Manager",
+    "email": "manager@casyst.com",
+    "phone": "9000000002",
+    "password": "$2b$12$68By3DyqCmoKJ1uWV8Z0dOxth138Oe5FtX9HqvEgISwL38gJUa4LG",
+    "role": "manager",
+    "status": "active",
+    "refresh_tokens": [],
+    "createdAt": "2026-03-05T17:10:36.728Z",
+    "updatedAt": "2026-03-05T17:10:36.728Z",
+    "__v": 0
+  },
+  {
+    "name": "Priya Sales",
+    "email": "sales@casyst.com",
+    "phone": "9000000003",
+    "password": "$2b$12$8SpeDLNuzSuVI2g75FWLne8sP/W6/W7idzXluwxDlnovLxRwWeSvC",
+    "role": "sales",
+    "status": "active",
+    "refresh_tokens": [],
+    "createdAt": "2026-03-05T17:10:36.728Z",
+    "updatedAt": "2026-03-05T17:10:36.728Z",
+    "__v": 0
+  },
+  {
+    "name": "Arun Ops",
+    "email": "ops@casyst.com",
+    "phone": "9000000004",
+    "password": "$2b$12$pT0fDkKKJsMsCZVYpTgviuNbXHuBZvYyZRSnmG1po0PLiqISqEVPq",
+    "role": "operations",
+    "status": "active",
+    "refresh_tokens": [],
+    "createdAt": "2026-03-05T17:10:36.728Z",
+    "updatedAt": "2026-03-05T17:10:36.728Z",
+    "__v": 0
+  },
+  {
+    "name": "Ravi Accountant",
+    "email": "accountant@casyst.com",
+    "phone": "9000000005",
+    "password": "$2b$12$EkLg6GYFP8PZq4X96OMvyO3QornMTu9dr75fpLzmNylL9yYTOiVoC",
+    "role": "accountant",
+    "status": "active",
+    "refresh_tokens": [],
+    "createdAt": "2026-03-05T17:10:36.728Z",
+    "updatedAt": "2026-03-05T17:10:36.728Z",
+    "__v": 0
+  }
+]

@@ -20,6 +20,7 @@ const seed = async () => {
     const manager = await User.create({ name: 'Rajesh Manager', email: 'manager@casyst.com', phone: '9000000002', password: 'manager123', role: 'manager' });
     const sales1 = await User.create({ name: 'Priya Sales', email: 'sales@casyst.com', phone: '9000000003', password: 'sales123', role: 'sales' });
     const ops1 = await User.create({ name: 'Arun Ops', email: 'ops@casyst.com', phone: '9000000004', password: 'ops123', role: 'operations' });
+    await User.create({ name: 'Ravi Accountant', email: 'accountant@casyst.com', phone: '9000000005', password: 'accountant123', role: 'accountant' });
 
     // Create packages
     const pvtLtd = await Package.create({

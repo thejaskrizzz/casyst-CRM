@@ -32,6 +32,9 @@ import OperationsDashboard from './pages/operations/OperationsDashboard';
 import ServiceOrdersListPage from './pages/operations/ServiceOrdersListPage';
 import ServiceOrderDetailPage from './pages/operations/ServiceOrderDetailPage';
 
+// Accountant
+import AccountantDashboard from './pages/accountant/AccountantDashboard';
+
 const Unauthorized = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
     <div style={{ textAlign: 'center' }}>
@@ -101,6 +104,13 @@ export default function App() {
             <Route path="dashboard" element={<OperationsDashboard />} />
             <Route path="service-orders" element={<ServiceOrdersListPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+
+          {/* Accountant */}
+          <Route path="/accountant" element={<ProtectedRoute roles={['accountant']}><Layout /></ProtectedRoute>}>
+            <Route path="dashboard" element={<AccountantDashboard />} />
+            <Route path="payments" element={<AccountantDashboard />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

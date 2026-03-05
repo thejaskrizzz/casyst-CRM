@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ['admin', 'manager', 'sales', 'operations'], required: true },
+    role: { type: String, enum: ['admin', 'manager', 'sales', 'operations', 'accountant'], required: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     refresh_tokens: [{ type: String }],
 }, { timestamps: true });
