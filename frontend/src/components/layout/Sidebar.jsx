@@ -68,7 +68,7 @@ export default function Sidebar() {
             <div style={{ padding: '4px 10px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, flexShrink: 0, overflow: 'hidden', borderRadius: 8, background: settings?.logo_url ? '#ffffff' : 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {settings?.logo_url ? (
-                        <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${settings.logo_url}`} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com'}${settings.logo_url}`} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : (
                         <span style={{ color: '#fff', fontSize: 15, fontWeight: 800 }}>{settings?.company_name?.charAt(0) || 'C'}</span>
                     )}
