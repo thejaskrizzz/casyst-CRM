@@ -45,8 +45,8 @@ router.get('/mine', async (req, res, next) => {
                 assigned_to: req.user._id,
                 createdAt: { $gte: todayStart, $lte: todayEnd },
             })
-                .populate('assigned_by', 'name')
-                .select('company_name contact_person phone status source createdAt assigned_by')
+                .populate('created_by', 'name')
+                .select('name phone email status source createdAt created_by')
                 .sort({ createdAt: -1 });
 
             activeLeads = await Lead.find({
@@ -54,7 +54,7 @@ router.get('/mine', async (req, res, next) => {
                 status: { $nin: ['converted', 'lost'] },
                 createdAt: { $lt: todayStart },
             })
-                .select('company_name contact_person phone status source createdAt')
+                .select('name phone email status source createdAt')
                 .sort({ updatedAt: -1 })
                 .limit(20);
         }

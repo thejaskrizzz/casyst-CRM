@@ -74,15 +74,15 @@ function LeadCard({ lead, basePath, isNew }) {
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${statusColor}`, borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                 <div>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{lead.company_name || lead.contact_person}</div>
-                    {lead.contact_person && lead.company_name && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{lead.contact_person}</div>}
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{lead.name}</div>
+                    {lead.email && <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{lead.email}</div>}
                 </div>
                 <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 999, fontWeight: 700, background: `${statusColor}22`, color: statusColor, flexShrink: 0, textTransform: 'capitalize' }}>{lead.status?.replace(/_/g, ' ')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
                 {lead.phone && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>📞 {lead.phone}</span>}
                 {lead.source && <span style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'capitalize' }}>via {lead.source}</span>}
-                {isNew && lead.assigned_by?.name && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Assigned by {lead.assigned_by.name}</span>}
+                {isNew && lead.created_by?.name && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>Added by {lead.created_by.name}</span>}
                 <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{fmtDate(lead.createdAt)}</span>
                 <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, gap: 4, padding: '2px 8px' }} onClick={() => navigate(`${basePath}/leads/${lead._id}`)}><ExternalLink size={11} /> Open Lead</button>
             </div>
