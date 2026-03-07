@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     LayoutDashboard, Users, Package, TrendingUp, Briefcase,
-    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award, CheckCircle
+    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award, CheckCircle, ClipboardList
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
@@ -15,6 +15,7 @@ const navConfig = {
         { label: 'Packages', to: '/admin/packages', icon: Package },
         { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
         { label: 'Staff Performance', to: '/admin/staff-performance', icon: Award },
+        { label: 'My Tasks', to: '/admin/my-tasks', icon: ClipboardList },
         { label: 'Settings', to: '/admin/settings', icon: Settings },
     ],
 
@@ -25,6 +26,7 @@ const navConfig = {
         { label: 'Service Orders', to: '/manager/service-orders', icon: Briefcase },
         { label: 'Clients', to: '/manager/clients', icon: Building2 },
         { label: 'Packages', to: '/manager/packages', icon: Package },
+        { label: 'My Tasks', to: '/manager/my-tasks', icon: ClipboardList },
     ],
     sales: [
         { label: 'Dashboard', to: '/sales/dashboard', icon: LayoutDashboard },
@@ -32,16 +34,19 @@ const navConfig = {
         { label: 'Quotes', to: '/sales/quotes', icon: Receipt },
         { label: 'My Orders', to: '/sales/service-orders', icon: Briefcase },
         { label: 'Followups', to: '/sales/followups', icon: FileText },
+        { label: 'My Tasks', to: '/sales/my-tasks', icon: ClipboardList },
     ],
     operations: [
         { label: 'Dashboard', to: '/operations/dashboard', icon: LayoutDashboard },
         { label: 'Service Orders', to: '/operations/service-orders', icon: Briefcase },
         { label: 'Expenses', to: '/operations/expenses', icon: Receipt },
+        { label: 'My Tasks', to: '/operations/my-tasks', icon: ClipboardList },
     ],
     accountant: [
         { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
         { label: 'Payments Queue', to: '/accountant/payments', icon: CheckCircle },
         { label: 'Invoices', to: '/accountant/invoices', icon: Receipt },
+        { label: 'My Tasks', to: '/accountant/my-tasks', icon: ClipboardList },
     ],
 };
 

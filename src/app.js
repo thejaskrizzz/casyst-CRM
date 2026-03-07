@@ -31,6 +31,7 @@ app.use('/api/quotes', require('./routes/quoteRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/tasks', require('./routes/taskRoutes'));
 
 
 

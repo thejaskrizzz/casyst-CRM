@@ -38,6 +38,9 @@ import AccountantDashboard from './pages/accountant/AccountantDashboard';
 import PaymentsQueue from './pages/accountant/PaymentsQueue';
 import ManualInvoicePage from './pages/accountant/ManualInvoicePage';
 
+// Shared
+import MyTasksPage from './pages/shared/MyTasksPage';
+
 const Unauthorized = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
     <div style={{ textAlign: 'center' }}>
@@ -71,6 +74,7 @@ export default function App() {
             <Route path="leads/:id" element={<LeadDetailPage />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="staff-performance" element={<StaffPerformance />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
@@ -86,6 +90,7 @@ export default function App() {
             <Route path="quotes/:id" element={<QuoteDetailPage />} />
             <Route path="clients" element={<div style={{ padding: 24 }}><h2>Clients</h2></div>} />
             <Route path="packages" element={<PackagesPage />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -99,6 +104,7 @@ export default function App() {
             <Route path="service-orders" element={<ServiceOrdersListPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="followups" element={<LeadsListPage />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -108,6 +114,7 @@ export default function App() {
             <Route path="service-orders" element={<ServiceOrdersListPage />} />
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -116,6 +123,7 @@ export default function App() {
             <Route path="dashboard" element={<AccountantDashboard />} />
             <Route path="payments" element={<PaymentsQueue />} />
             <Route path="invoices" element={<ManualInvoicePage />} />
+            <Route path="my-tasks" element={<MyTasksPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
