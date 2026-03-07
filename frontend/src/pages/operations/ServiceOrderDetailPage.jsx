@@ -78,6 +78,11 @@ export default function ServiceOrderDetailPage() {
     const [expForm, setExpForm] = useState({ category: 'vendor', description: '', amount: '', date: new Date().toISOString().slice(0, 10), notes: '' });
     const [addingExpense, setAddingExpense] = useState(false);
 
+    // Task modal
+    const [taskModal, setTaskModal] = useState(false);
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', assigned_to: '' });
+    const [addingTask, setAddingTask] = useState(false);
+
     const canManage = ['admin', 'manager'].includes(user.role);
     const canAddPayment = ['admin', 'manager', 'sales'].includes(user.role);
     const canApprovePayment = ['admin', 'accountant'].includes(user.role);
@@ -103,10 +108,10 @@ export default function ServiceOrderDetailPage() {
 
     useEffect(() => { loadAll(); }, [id]);
 
-    // Fetch ops users for assignment
+    // Fetch all staff for task assignment dropdown
     useEffect(() => {
         if (canManage) {
-            api.get('/users', { params: { role: 'operations', limit: 50 } })
+            api.get('/users', { params: { limit: 100 } })
                 .then(r => setOpsUsers(r.data.data || []))
                 .catch(() => { });
         }
@@ -186,6 +191,20 @@ export default function ServiceOrderDetailPage() {
             loadAll();
         } catch (e) { toast.error(e.response?.data?.message || 'Failed to record expense'); }
         finally { setAddingExpense(false); }
+    };
+
+    const doAddTask = async (e) => {
+        e.preventDefault();
+        if (!taskForm.title.trim()) { toast.error('Task title is required'); return; }
+        setAddingTask(true);
+        try {
+            await api.post(`/service-orders/${id}/tasks`, taskForm);
+            toast.success('Task added');
+            setTaskModal(false);
+            setTaskForm({ title: '', description: '', assigned_to: '' });
+            loadAll();
+        } catch (e) { toast.error(e.response?.data?.message || 'Failed to add task'); }
+        finally { setAddingTask(false); }
     };
 
     const doDeleteExpense = async (eid) => {
@@ -503,6 +522,11 @@ export default function ServiceOrderDetailPage() {
                             <div className="section-title" style={{ margin: 0 }}>
                                 Tasks {tasks.length > 0 && <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--ink-3)', fontWeight: 400 }}>{completedTasks}/{tasks.length} done</span>}
                             </div>
+                            {canManage && (
+                                <button className="btn btn-ghost btn-sm" style={{ gap: 5 }} onClick={() => setTaskModal(true)}>
+                                    <Plus size={12} /> Add Task
+                                </button>
+                            )}
                         </div>
                         {tasks.length > 0 && (
                             <div style={{ marginBottom: 16 }}>
@@ -520,7 +544,13 @@ export default function ServiceOrderDetailPage() {
                                     <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, border: '2px solid', borderColor: t.completed ? '#2e7d32' : 'var(--border)', background: t.completed ? '#2e7d32' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                                         {t.completed && <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#fff" strokeWidth="2"><polyline points="1,4 4,7 9,1" /></svg>}
                                     </div>
-                                    <span style={{ fontSize: 13, color: t.completed ? 'var(--ink-3)' : 'var(--ink)', textDecoration: t.completed ? 'line-through' : 'none', flex: 1 }}>{t.title || t.description}</span>
+                                    <div style={{ flex: 1 }}>
+                                        <span style={{ fontSize: 13, color: t.completed ? 'var(--ink-3)' : 'var(--ink)', textDecoration: t.completed ? 'line-through' : 'none' }}>{t.title || t.description}</span>
+                                        {t.assigned_to && (
+                                            <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--ink-3)', background: 'var(--surface-2)', borderRadius: 999, padding: '1px 7px' }}>👤 {t.assigned_to.name}</span>
+                                        )}
+                                        {t.description && <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{t.description}</div>}
+                                    </div>
                                 </div>
                             ))
                         }
@@ -823,6 +853,65 @@ export default function ServiceOrderDetailPage() {
                                 <button type="button" className="btn btn-outline" onClick={() => setExpenseModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary" disabled={addingExpense || !expForm.amount}>
                                     {addingExpense ? 'Saving…' : '✓ Record Expense'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── TASK MODAL ── */}
+            {taskModal && (
+                <div className="modal-overlay" onClick={() => setTaskModal(false)}>
+                    <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <span className="modal-title">✅ Add Task</span>
+                            <button className="icon-btn" onClick={() => setTaskModal(false)}><X size={14} /></button>
+                        </div>
+                        <form onSubmit={doAddTask}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                <div className="form-group">
+                                    <label className="form-label">Task Title *</label>
+                                    <input
+                                        className="form-input"
+                                        required
+                                        placeholder="e.g. Upload incorporation certificate"
+                                        value={taskForm.title}
+                                        onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <textarea
+                                        className="form-input"
+                                        rows={2}
+                                        style={{ resize: 'none' }}
+                                        placeholder="Optional details or instructions"
+                                        value={taskForm.description}
+                                        onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Assign To</label>
+                                    <select
+                                        className="form-input"
+                                        value={taskForm.assigned_to}
+                                        onChange={e => setTaskForm(f => ({ ...f, assigned_to: e.target.value }))}
+                                    >
+                                        <option value="">— Unassigned —</option>
+                                        {opsUsers.map(u => (
+                                            <option key={u._id} value={u._id}>{u.name} ({u.role})</option>
+                                        ))}
+                                    </select>
+                                    {opsUsers.length === 0 && (
+                                        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>No operations users found. Tasks can still be created unassigned.</div>
+                                    )}
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 14 }}>
+                                <button type="button" className="btn btn-outline" onClick={() => setTaskModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={addingTask || !taskForm.title.trim()}>
+                                    {addingTask ? 'Saving…' : '✓ Add Task'}
                                 </button>
                             </div>
                         </form>
