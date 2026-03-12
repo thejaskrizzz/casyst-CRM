@@ -4,14 +4,21 @@ const ServiceOrder = require('../models/ServiceOrder');
 const CallLog = require('../models/CallLog');
 const { logActivity } = require('../utils/activityLogger');
 
-// @desc    Get leads (sales: own, manager/admin: all)
 exports.getLeads = async (req, res, next) => {
     try {
-        const { status, source, page = 1, limit = 20, search, assigned_to } = req.query;
+        const { status, source, page = 1, limit = 20, search, assigned_to, branch } = req.query;
         const filter = { is_archived: false };
 
         if (req.user.role === 'sales') filter.assigned_to = req.user._id;
         else if (assigned_to) filter.assigned_to = assigned_to;
+
+        // Branch scoping: branch-scoped roles only see their own branch
+        const scopedRoles = ['manager', 'sales', 'operations'];
+        if (scopedRoles.includes(req.user.role) && req.user.branch) {
+            filter.branch = req.user.branch._id || req.user.branch;
+        } else if (req.user.role === 'admin' && branch) {
+            filter.branch = branch;
+        }
 
         if (status) filter.status = status;
         if (source) filter.source = source;
@@ -26,6 +33,7 @@ exports.getLeads = async (req, res, next) => {
             .populate('assigned_to', 'name email')
             .populate('interested_package', 'name price')
             .populate('created_by', 'name')
+            .populate('branch', 'name code')
             .skip((page - 1) * limit).limit(Number(limit))
             .sort({ createdAt: -1 });
 
@@ -52,10 +60,12 @@ exports.getLead = async (req, res, next) => {
 exports.createLead = async (req, res, next) => {
     try {
         const { name, phone, email, source, interested_package, notes } = req.body;
+        const branchId = req.user.branch?._id || req.user.branch || null;
         const lead = await Lead.create({
             name, phone, email, source, interested_package, notes,
             assigned_to: req.user.role === 'sales' ? req.user._id : req.body.assigned_to,
             created_by: req.user._id,
+            branch: branchId,
             status_history: [{ status: 'new', changed_by: req.user._id, note: 'Lead created' }],
         });
         await logActivity({ entity_type: 'lead', entity_id: lead._id, action: 'lead_created', performed_by: req.user._id, description: `Lead '${lead.name}' created` });
@@ -108,11 +118,26 @@ exports.convertLead = async (req, res, next) => {
         if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
         if (lead.converted) return res.status(400).json({ success: false, message: 'Lead already converted' });
 
+        // Branch guard: validate ops assignee is in the same branch
+        if (assigned_to_ops && req.user.branch) {
+            const User = require('../models/User');
+            const assignee = await User.findById(assigned_to_ops).select('branch');
+            if (!assignee) return res.status(404).json({ success: false, message: 'Assignee not found' });
+            const managerBranch = (req.user.branch._id || req.user.branch).toString();
+            const assigneeBranch = (assignee.branch?._id || assignee.branch || '').toString();
+            if (managerBranch !== assigneeBranch) {
+                return res.status(403).json({ success: false, message: 'Cannot assign to operations staff from a different branch' });
+            }
+        }
+
+
         // Lock the lead
         lead.converted = true;
         lead.status = 'converted';
         lead.status_history.push({ status: 'converted', changed_by: req.user._id, note: 'Lead converted to client' });
         await lead.save();
+
+        const branchId = req.user.branch?._id || req.user.branch || null;
 
         // Create client
         const client = await Client.create({
@@ -121,6 +146,7 @@ exports.convertLead = async (req, res, next) => {
             phone: lead.phone,
             email: lead.email,
             lead: lead._id,
+            branch: branchId,
             created_by: req.user._id,
         });
 
@@ -131,6 +157,7 @@ exports.convertLead = async (req, res, next) => {
             lead: lead._id,
             priority: priority || 'medium',
             due_date,
+            branch: branchId,
             assigned_to: assigned_to_ops || undefined,
             assigned_by: assigned_to_ops ? req.user._id : undefined,
             created_by: req.user._id,
@@ -204,6 +231,18 @@ exports.assignLead = async (req, res, next) => {
         const lead = await Lead.findById(req.params.id);
         if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
         if (lead.converted) return res.status(400).json({ success: false, message: 'Cannot reassign a converted lead' });
+
+        // Branch guard: a manager can only assign to staff in their own branch
+        if (assigned_to && req.user.branch) {
+            const User = require('../models/User');
+            const assignee = await User.findById(assigned_to).select('branch');
+            if (!assignee) return res.status(404).json({ success: false, message: 'Assignee not found' });
+            const managerBranch = (req.user.branch._id || req.user.branch).toString();
+            const assigneeBranch = (assignee.branch?._id || assignee.branch || '').toString();
+            if (managerBranch !== assigneeBranch) {
+                return res.status(403).json({ success: false, message: 'Cannot assign to staff from a different branch' });
+            }
+        }
 
         const prevAssignee = lead.assigned_to;
         lead.assigned_to = assigned_to || null;

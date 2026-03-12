@@ -141,6 +141,40 @@ export default function OperationsDashboard() {
                 </div>
             )}
 
+            {/* ── Daily & Monthly summary strip ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#1976d210)', border: '1px solid #5c6bc030' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#5c6bc0', marginBottom: 14 }}>📅 Today</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                        {[
+                            { label: 'Due Today', value: data.due_today || 0, color: '#f57c00' },
+                            { label: 'Overdue', value: data.overdue_count || 0, color: '#c62828' },
+                            { label: 'Awaiting Docs', value: data.pending_documents || 0, color: '#1976d2' },
+                        ].map(({ label, value, color }) => (
+                            <div key={label} style={{ textAlign: 'center', padding: '10px 8px', borderRadius: 10, background: color + '10', border: `1px solid ${color}25` }}>
+                                <div style={{ fontSize: 24, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="card" style={{ background: 'linear-gradient(135deg,#2e7d3218,#26a69a10)', border: '1px solid #2e7d3230' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#2e7d32', marginBottom: 14 }}>📆 This Week / Month</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                        {[
+                            { label: 'Completed (Week)', value: data.completed_this_week || 0, color: '#2e7d32' },
+                            { label: 'Total Assigned', value: data.assigned_jobs || 0, color: '#5c6bc0' },
+                            { label: 'Completion Rate', value: `${data.completion_rate || 0}%`, color: '#26a69a' },
+                        ].map(({ label, value, color }) => (
+                            <div key={label} style={{ textAlign: 'center', padding: '10px 8px', borderRadius: 10, background: color + '10', border: `1px solid ${color}25` }}>
+                                <div style={{ fontSize: 24, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
             {/* KPI Row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
                 <StatCard label="Assigned Orders" value={data.assigned_jobs || 0} icon={Briefcase} color="#5c6bc0" href="/operations/service-orders" />
@@ -154,6 +188,7 @@ export default function OperationsDashboard() {
                 <StatCard label="Completion Rate" value={`${data.completion_rate || 0}%`} icon={TrendingUp} color="#26a69a"
                     sub={data.completion_rate >= 50 ? '✓ On track' : 'Needs attention'} />
             </div>
+
 
             {/* Row: Completion Trend + Priority Breakdown */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 20, marginBottom: 20 }}>

@@ -12,6 +12,7 @@ const leadSchema = new mongoose.Schema({
     status: { type: String, enum: LEAD_STATUSES, default: 'new' },
     assigned_to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
     converted: { type: Boolean, default: false },
     status_history: [{
         status: { type: String, enum: LEAD_STATUSES },

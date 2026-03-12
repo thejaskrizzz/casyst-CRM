@@ -69,6 +69,7 @@ const serviceOrderSchema = new mongoose.Schema({
     converted_at: { type: Date },
 
     is_archived: { type: Boolean, default: false },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

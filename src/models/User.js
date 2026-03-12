@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ['admin', 'manager', 'sales', 'operations', 'accountant'], required: true },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
     refresh_tokens: [{ type: String }],
 }, { timestamps: true });
 

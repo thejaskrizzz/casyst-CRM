@@ -7,6 +7,7 @@ const taskSchema = new mongoose.Schema({
     assigned_to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['pending', 'in_progress', 'done'], default: 'pending' },
     remarks: { type: String },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

@@ -12,6 +12,7 @@ const navConfig = {
         { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Leads', to: '/admin/leads', icon: TrendingUp },
         { label: 'Users', to: '/admin/users', icon: Users },
+        { label: 'Branches', to: '/admin/branches', icon: Building2 },
         { label: 'Packages', to: '/admin/packages', icon: Package },
         { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
         { label: 'Staff Performance', to: '/admin/staff-performance', icon: Award },
@@ -105,6 +106,14 @@ export default function Sidebar() {
             </div>
 
             <div className="rail-bottom">
+                {/* Branch badge for scoped roles */}
+                {user?.branch && ['manager', 'sales', 'operations'].includes(user?.role) && (
+                    <div style={{ padding: '6px 14px', marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, background: 'var(--surface-2)', color: 'var(--ink-3)', borderRadius: 6, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <Building2 size={10} /> {user.branch.name || user.branch.code}
+                        </span>
+                    </div>
+                )}
                 <button className="rail-btn" onClick={toggleTheme}>
                     {dark ? <Sun /> : <Moon />}
                     <span>{dark ? 'Light mode' : 'Dark mode'}</span>

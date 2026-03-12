@@ -72,11 +72,14 @@ export default function LeadDetailPage() {
     };
     useEffect(() => { fetchLead(); }, [id]);
 
-    // Load ops staff for assignment in Convert modal
+    // Load ops staff for assignment in Convert modal — only same-branch users
     useEffect(() => {
         if (canConvert) {
-            api.get('/users').then(r => {
-                setOpsUsers(r.data.data.filter(u => u.role === 'operations' && u.status === 'active'));
+            const params = { role: 'operations', status: 'active', limit: 100 };
+            // If current user has a branch, filter ops staff by that branch only
+            if (user.branch) params.branch = user.branch._id || user.branch;
+            api.get('/users', { params }).then(r => {
+                setOpsUsers(r.data.data || []);
             }).catch(() => { });
         }
     }, []);

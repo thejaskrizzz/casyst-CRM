@@ -11,24 +11,25 @@ const Quote = require('../models/Quote');
 exports.salesDashboard = async (req, res, next) => {
     try {
         const userId = req.user._id;
+        const branchId = req.user.branch?._id || req.user.branch || null;
+        const branchFilter = branchId ? { branch: branchId } : {};
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
 
-        // 6-month window
         const sixMonthsAgo = new Date(now);
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
         sixMonthsAgo.setDate(1); sixMonthsAgo.setHours(0, 0, 0, 0);
 
         const [myLeads, conversions, lost, interested, followupsToday, statusBreakdown, quoteStats] = await Promise.all([
-            Lead.countDocuments({ assigned_to: userId, is_archived: false }),
-            Lead.countDocuments({ assigned_to: userId, status: 'converted', updatedAt: { $gte: startOfMonth } }),
-            Lead.countDocuments({ assigned_to: userId, status: 'lost' }),
-            Lead.countDocuments({ assigned_to: userId, status: 'interested' }),
+            Lead.countDocuments({ assigned_to: userId, is_archived: false, ...branchFilter }),
+            Lead.countDocuments({ assigned_to: userId, status: 'converted', updatedAt: { $gte: startOfMonth }, ...branchFilter }),
+            Lead.countDocuments({ assigned_to: userId, status: 'lost', ...branchFilter }),
+            Lead.countDocuments({ assigned_to: userId, status: 'interested', ...branchFilter }),
             CallLog.countDocuments({ performed_by: userId, next_followup_date: { $gte: startOfDay, $lte: endOfDay } }),
             Lead.aggregate([
-                { $match: { assigned_to: userId, is_archived: false } },
+                { $match: { assigned_to: userId, is_archived: false, ...branchFilter } },
                 { $group: { _id: '$status', count: { $sum: 1 } } }
             ]),
             Quote.aggregate([
@@ -37,14 +38,12 @@ exports.salesDashboard = async (req, res, next) => {
             ]),
         ]);
 
-        // 6-month lead trend (created per month)
         const leadTrend = await Lead.aggregate([
-            { $match: { assigned_to: userId, createdAt: { $gte: sixMonthsAgo } } },
+            { $match: { assigned_to: userId, createdAt: { $gte: sixMonthsAgo }, ...branchFilter } },
             { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, created: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'converted'] }, 1, 0] } } } },
             { $sort: { '_id.year': 1, '_id.month': 1 } }
         ]);
 
-        // Call activity last 7 days
         const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); sevenDaysAgo.setHours(0, 0, 0, 0);
         const callActivity = await CallLog.aggregate([
             { $match: { performed_by: userId, createdAt: { $gte: sevenDaysAgo } } },
@@ -52,16 +51,14 @@ exports.salesDashboard = async (req, res, next) => {
             { $sort: { _id: 1 } }
         ]);
 
-        // Source breakdown
         const sourceBreakdown = await Lead.aggregate([
-            { $match: { assigned_to: userId, is_archived: false } },
+            { $match: { assigned_to: userId, is_archived: false, ...branchFilter } },
             { $group: { _id: '$source', count: { $sum: 1 } } },
             { $sort: { count: -1 } }
         ]);
 
-        // Top interested packages
         const topPackages = await Lead.aggregate([
-            { $match: { assigned_to: userId, interested_package: { $exists: true, $ne: null } } },
+            { $match: { assigned_to: userId, interested_package: { $exists: true, $ne: null }, ...branchFilter } },
             { $group: { _id: '$interested_package', count: { $sum: 1 } } },
             { $lookup: { from: 'packages', localField: '_id', foreignField: '_id', as: 'pkg' } },
             { $unwind: '$pkg' },
@@ -69,17 +66,14 @@ exports.salesDashboard = async (req, res, next) => {
             { $sort: { count: -1 } }, { $limit: 5 }
         ]);
 
-        // Overdue followups
         const overdueFollowups = await CallLog.find({
             performed_by: userId,
             next_followup_date: { $lt: startOfDay }
         }).populate('lead', 'name phone status').sort({ next_followup_date: 1 }).limit(5);
 
-        // Recent leads
-        const recentLeads = await Lead.find({ assigned_to: userId, is_archived: false })
+        const recentLeads = await Lead.find({ assigned_to: userId, is_archived: false, ...branchFilter })
             .populate('interested_package', 'name').sort({ createdAt: -1 }).limit(8);
 
-        // Recent quotes
         const recentQuotes = await Quote.find({ created_by: userId, is_archived: false })
             .sort({ createdAt: -1 }).limit(5);
 
@@ -103,48 +97,41 @@ exports.salesDashboard = async (req, res, next) => {
 exports.operationsDashboard = async (req, res, next) => {
     try {
         const userId = req.user._id;
+        const branchId = req.user.branch?._id || req.user.branch || null;
+        const branchFilter = branchId ? { branch: branchId } : {};
         const now = new Date();
         const startOfWeek = new Date(); startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
         const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
         const threeDaysLater = new Date(); threeDaysLater.setDate(threeDaysLater.getDate() + 3); threeDaysLater.setHours(23, 59, 59, 999);
-
         const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); sevenDaysAgo.setHours(0, 0, 0, 0);
 
+        const base = { assigned_to: userId, is_archived: false, ...branchFilter };
+
         const [assigned, dueToday, pendingDocs, completedWeek, statusBreakdown, priorityBreakdown, overdue] = await Promise.all([
-            ServiceOrder.countDocuments({ assigned_to: userId, is_archived: false }),
-            ServiceOrder.countDocuments({ assigned_to: userId, due_date: { $gte: startOfDay, $lte: endOfDay }, status: { $nin: ['completed'] } }),
-            ServiceOrder.countDocuments({ assigned_to: userId, status: 'pending_documents' }),
-            ServiceOrder.countDocuments({ assigned_to: userId, status: 'completed', updatedAt: { $gte: startOfWeek } }),
-            ServiceOrder.aggregate([
-                { $match: { assigned_to: userId, is_archived: false } },
-                { $group: { _id: '$status', count: { $sum: 1 } } }
-            ]),
-            ServiceOrder.aggregate([
-                { $match: { assigned_to: userId, is_archived: false, status: { $nin: ['completed'] } } },
-                { $group: { _id: '$priority', count: { $sum: 1 } } }
-            ]),
-            ServiceOrder.countDocuments({ assigned_to: userId, due_date: { $lt: startOfDay }, status: { $nin: ['completed', 'on_hold'] } }),
+            ServiceOrder.countDocuments(base),
+            ServiceOrder.countDocuments({ ...base, due_date: { $gte: startOfDay, $lte: endOfDay }, status: { $nin: ['completed'] } }),
+            ServiceOrder.countDocuments({ ...base, status: 'pending_documents' }),
+            ServiceOrder.countDocuments({ ...base, status: 'completed', updatedAt: { $gte: startOfWeek } }),
+            ServiceOrder.aggregate([{ $match: base }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
+            ServiceOrder.aggregate([{ $match: { ...base, status: { $nin: ['completed'] } } }, { $group: { _id: '$priority', count: { $sum: 1 } } }]),
+            ServiceOrder.countDocuments({ ...base, due_date: { $lt: startOfDay }, status: { $nin: ['completed', 'on_hold'] } }),
         ]);
 
-        // 7-day completion trend
         const completionTrend = await ServiceOrder.aggregate([
-            { $match: { assigned_to: userId, status: 'completed', updatedAt: { $gte: sevenDaysAgo } } },
+            { $match: { ...base, status: 'completed', updatedAt: { $gte: sevenDaysAgo } } },
             { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$updatedAt' } }, completed: { $sum: 1 } } },
             { $sort: { _id: 1 } }
         ]);
 
-        // Urgent jobs
-        const urgentJobs = await ServiceOrder.find({ assigned_to: userId, priority: 'high', status: { $nin: ['completed'] } })
+        const urgentJobs = await ServiceOrder.find({ ...base, priority: 'high', status: { $nin: ['completed'] } })
             .populate('client', 'company_name').populate('package', 'name').sort({ due_date: 1 }).limit(5);
 
-        // Due soon (next 3 days)
         const dueSoon = await ServiceOrder.find({
-            assigned_to: userId, due_date: { $gte: startOfDay, $lte: threeDaysLater }, status: { $nin: ['completed', 'on_hold'] }
+            ...base, due_date: { $gte: startOfDay, $lte: threeDaysLater }, status: { $nin: ['completed', 'on_hold'] }
         }).populate('client', 'company_name').populate('package', 'name').sort({ due_date: 1 }).limit(5);
 
-        // Recent completions
-        const recentCompletions = await ServiceOrder.find({ assigned_to: userId, status: 'completed' })
+        const recentCompletions = await ServiceOrder.find({ assigned_to: userId, status: 'completed', ...branchFilter })
             .populate('client', 'company_name').populate('package', 'name').sort({ updatedAt: -1 }).limit(5);
 
         const total = statusBreakdown.reduce((s, b) => s + b.count, 0);
@@ -167,6 +154,8 @@ exports.operationsDashboard = async (req, res, next) => {
 // @desc    Manager dashboard
 exports.managerDashboard = async (req, res, next) => {
     try {
+        const branchId = req.user.branch?._id || req.user.branch || null;
+        const bf = branchId ? { branch: branchId } : {}; // branch filter shorthand
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
@@ -176,34 +165,32 @@ exports.managerDashboard = async (req, res, next) => {
         sixMonthsAgo.setDate(1); sixMonthsAgo.setHours(0, 0, 0, 0);
 
         const [totalLeads, conversions, delayedServices, totalClients, totalOrders, completedOrders, quoteAgg] = await Promise.all([
-            Lead.countDocuments({ is_archived: false }),
-            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: startOfMonth } }),
-            ServiceOrder.countDocuments({ due_date: { $lt: startOfDay }, status: { $nin: ['completed', 'on_hold'] } }),
-            Client.countDocuments({ is_archived: false }),
-            ServiceOrder.countDocuments({ is_archived: false }),
-            ServiceOrder.countDocuments({ status: 'completed' }),
+            Lead.countDocuments({ is_archived: false, ...bf }),
+            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: startOfMonth }, ...bf }),
+            ServiceOrder.countDocuments({ due_date: { $lt: startOfDay }, status: { $nin: ['completed', 'on_hold'] }, ...bf }),
+            Client.countDocuments({ is_archived: false, ...bf }),
+            ServiceOrder.countDocuments({ is_archived: false, ...bf }),
+            ServiceOrder.countDocuments({ status: 'completed', ...bf }),
             Quote.aggregate([
                 { $match: { is_archived: false } },
                 { $group: { _id: null, total: { $sum: 1 }, totalValue: { $sum: '$total' }, accepted: { $sum: { $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0] } } } }
             ]),
         ]);
 
-        // 6-month lead trend (all staff)
         const leadTrend = await Lead.aggregate([
-            { $match: { createdAt: { $gte: sixMonthsAgo } } },
+            { $match: { createdAt: { $gte: sixMonthsAgo }, ...bf } },
             { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, created: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'converted'] }, 1, 0] } } } },
             { $sort: { '_id.year': 1, '_id.month': 1 } }
         ]);
 
-        // 6-month service order completion
         const orderTrend = await ServiceOrder.aggregate([
-            { $match: { status: 'completed', updatedAt: { $gte: sixMonthsAgo } } },
+            { $match: { status: 'completed', updatedAt: { $gte: sixMonthsAgo }, ...bf } },
             { $group: { _id: { year: { $year: '$updatedAt' }, month: { $month: '$updatedAt' } }, completed: { $sum: 1 } } },
             { $sort: { '_id.year': 1, '_id.month': 1 } }
         ]);
 
         const salesPerformance = await Lead.aggregate([
-            { $match: { is_archived: false } },
+            { $match: { is_archived: false, ...bf } },
             { $group: { _id: '$assigned_to', total: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'converted'] }, 1, 0] } }, interested: { $sum: { $cond: [{ $eq: ['$status', 'interested'] }, 1, 0] } } } },
             { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
             { $unwind: '$user' },
@@ -212,7 +199,7 @@ exports.managerDashboard = async (req, res, next) => {
         ]);
 
         const revenueByPackage = await ServiceOrder.aggregate([
-            { $match: { status: 'completed' } },
+            { $match: { status: 'completed', ...bf } },
             { $lookup: { from: 'packages', localField: 'package', foreignField: '_id', as: 'pkg' } },
             { $unwind: '$pkg' },
             { $group: { _id: '$pkg.name', count: { $sum: 1 }, revenue: { $sum: '$pkg.price' } } },
@@ -220,7 +207,7 @@ exports.managerDashboard = async (req, res, next) => {
         ]);
 
         const opsCompletion = await ServiceOrder.aggregate([
-            { $match: { assigned_to: { $exists: true } } },
+            { $match: { assigned_to: { $exists: true }, ...bf } },
             { $group: { _id: '$assigned_to', total: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } } } },
             { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
             { $unwind: '$user' },
@@ -228,20 +215,17 @@ exports.managerDashboard = async (req, res, next) => {
             { $sort: { total: -1 } }
         ]);
 
-        // Lead status full breakdown
         const leadStatusBreakdown = await Lead.aggregate([
-            { $match: { is_archived: false } },
+            { $match: { is_archived: false, ...bf } },
             { $group: { _id: '$status', count: { $sum: 1 } } }
         ]);
 
-        // Service order status breakdown
         const orderStatusBreakdown = await ServiceOrder.aggregate([
-            { $match: { is_archived: false } },
+            { $match: { is_archived: false, ...bf } },
             { $group: { _id: '$status', count: { $sum: 1 } } }
         ]);
 
-        // Recent conversions
-        const recentConversions = await Lead.find({ status: 'converted' })
+        const recentConversions = await Lead.find({ status: 'converted', ...bf })
             .populate('assigned_to', 'name').populate('interested_package', 'name')
             .sort({ updatedAt: -1 }).limit(5);
 

@@ -16,6 +16,7 @@ import PackagesPage from './pages/admin/PackagesPage';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import StaffPerformance from './pages/admin/StaffPerformance';
+import BranchesPage from './pages/admin/BranchesPage';
 
 // Manager
 import ManagerDashboard from './pages/manager/ManagerDashboard';
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Layout /></ProtectedRoute>}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="branches" element={<BranchesPage />} />
             <Route path="packages" element={<PackagesPage />} />
             <Route path="leads" element={<LeadsListPage />} />
             <Route path="leads/:id" element={<LeadDetailPage />} />

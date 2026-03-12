@@ -7,12 +7,20 @@ const { logActivity } = require('../utils/activityLogger');
 /* ──────────── GET list ──────────── */
 exports.getServiceOrders = async (req, res, next) => {
     try {
-        const { status, priority, page = 1, limit = 20, assigned_to, search } = req.query;
+        const { status, priority, page = 1, limit = 20, assigned_to, search, branch } = req.query;
         const filter = { is_archived: false };
 
         if (req.user.role === 'operations') filter.assigned_to = req.user._id;
         else if (req.user.role === 'sales') filter.created_by = req.user._id;
         else if (assigned_to) filter.assigned_to = assigned_to;
+
+        // Branch scoping
+        const scopedRoles = ['manager', 'sales', 'operations'];
+        if (scopedRoles.includes(req.user.role) && req.user.branch) {
+            filter.branch = req.user.branch._id || req.user.branch;
+        } else if (req.user.role === 'admin' && branch) {
+            filter.branch = branch;
+        }
 
         if (status) filter.status = status;
         if (priority) filter.priority = priority;
@@ -24,12 +32,14 @@ exports.getServiceOrders = async (req, res, next) => {
             .populate('assigned_to', 'name email')
             .populate('assigned_by', 'name')
             .populate('quote', 'reference_no total')
+            .populate('branch', 'name code')
             .skip((page - 1) * limit).limit(Number(limit))
             .sort({ createdAt: -1 });
 
         res.json({ success: true, count: total, data: orders, page: Number(page), limit: Number(limit) });
     } catch (err) { next(err); }
 };
+
 
 /* ──────────── GET single ──────────── */
 exports.getServiceOrder = async (req, res, next) => {

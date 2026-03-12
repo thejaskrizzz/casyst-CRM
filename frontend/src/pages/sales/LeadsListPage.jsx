@@ -300,8 +300,11 @@ export default function LeadsListPage() {
     useEffect(() => {
         api.get('/packages').then(r => setPackages(r.data.data)).catch(() => { });
         if (canAssign) {
-            api.get('/users').then(r => {
-                setSalesUsers(r.data.data.filter(u => u.role === 'sales' && u.status === 'active'));
+            const params = { role: 'sales', status: 'active', limit: 100 };
+            // Branch-scoped managers only see their own branch's sales staff
+            if (user.branch) params.branch = user.branch._id || user.branch;
+            api.get('/users', { params }).then(r => {
+                setSalesUsers(r.data.data || []);
             }).catch(() => { });
         }
     }, []);

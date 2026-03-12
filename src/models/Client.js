@@ -6,6 +6,7 @@ const clientSchema = new mongoose.Schema({
     phone: { type: String, required: true, trim: true },
     email: { type: String, lowercase: true, trim: true },
     lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', required: true },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
     is_archived: { type: Boolean, default: false },
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });

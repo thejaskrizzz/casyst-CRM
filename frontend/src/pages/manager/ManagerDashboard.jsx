@@ -159,6 +159,42 @@ export default function ManagerDashboard() {
                 </div>
             )}
 
+            {/* ── Daily & Monthly summary strip ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#1976d210)', border: '1px solid #5c6bc030' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: ACCENT, marginBottom: 14 }}>📅 Today</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                        {[
+                            { label: 'Total Leads', value: data.total_leads || 0, color: ACCENT },
+                            { label: 'Total Clients', value: data.total_clients || 0, color: '#1976d2' },
+                            { label: 'Delayed Orders', value: data.delayed_services || 0, color: '#c62828' },
+                            { label: 'Total Orders', value: data.total_orders || 0, color: '#7b1fa2' },
+                        ].map(({ label, value, color }) => (
+                            <div key={label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: color + '10', border: `1px solid ${color}25` }}>
+                                <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="card" style={{ background: 'linear-gradient(135deg,#26a69a18,#2e7d3210)', border: '1px solid #26a69a30' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#26a69a', marginBottom: 14 }}>📆 This Month</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                        {[
+                            { label: 'Conversions', value: data.conversions_this_month || 0, color: '#26a69a' },
+                            { label: 'Completed Orders', value: data.completed_orders || 0, color: '#2e7d32' },
+                            { label: 'Quotes Accepted', value: data.quote_stats?.accepted || 0, color: '#0097a7' },
+                            { label: 'Ops Rate', value: `${data.ops_rate || 0}%`, color: '#f57c00' },
+                        ].map(({ label, value, color }) => (
+                            <div key={label} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: color + '10', border: `1px solid ${color}25` }}>
+                                <div style={{ fontSize: 22, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                                <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--ink-3)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
             {/* KPI Row 1 — Lead & Client */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
                 <StatCard label="Total Leads" value={data.total_leads || 0} icon={TrendingUp} color={ACCENT} href="/manager/leads" />
