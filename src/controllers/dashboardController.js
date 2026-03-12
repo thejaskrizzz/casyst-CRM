@@ -164,8 +164,9 @@ exports.managerDashboard = async (req, res, next) => {
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
         sixMonthsAgo.setDate(1); sixMonthsAgo.setHours(0, 0, 0, 0);
 
-        const [totalLeads, conversions, delayedServices, totalClients, totalOrders, completedOrders, quoteAgg] = await Promise.all([
+        const [totalLeads, unassignedLeads, conversions, delayedServices, totalClients, totalOrders, completedOrders, quoteAgg] = await Promise.all([
             Lead.countDocuments({ is_archived: false, ...bf }),
+            Lead.countDocuments({ is_archived: false, assigned_to: null, ...bf }),
             Lead.countDocuments({ status: 'converted', updatedAt: { $gte: startOfMonth }, ...bf }),
             ServiceOrder.countDocuments({ due_date: { $lt: startOfDay }, status: { $nin: ['completed', 'on_hold'] }, ...bf }),
             Client.countDocuments({ is_archived: false, ...bf }),
@@ -234,7 +235,7 @@ exports.managerDashboard = async (req, res, next) => {
 
         res.json({
             success: true, data: {
-                total_leads: totalLeads, conversions_this_month: conversions,
+                total_leads: totalLeads, unassigned_leads: unassignedLeads, conversions_this_month: conversions,
                 delayed_services: delayedServices, total_clients: totalClients,
                 total_orders: totalOrders, completed_orders: completedOrders, ops_rate: opsRate,
                 quote_stats: qStats, lead_trend: leadTrend, order_trend: orderTrend,
@@ -250,22 +251,25 @@ exports.managerDashboard = async (req, res, next) => {
 // @desc    Admin dashboard — rich analytics
 exports.adminDashboard = async (req, res, next) => {
     try {
+        const branchId = req.query.branch;
+        const bf = branchId && branchId !== 'all' ? { branch: branchId } : {};
+
         const now = new Date();
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
         // Core counts
         const [totalUsers, totalLeads, totalClients, totalOrders, totalPackages, completedOrders] = await Promise.all([
-            User.countDocuments(),
-            Lead.countDocuments({ is_archived: false }),
-            Client.countDocuments({ is_archived: false }),
-            ServiceOrder.countDocuments({ is_archived: false }),
+            User.countDocuments(bf),
+            Lead.countDocuments({ is_archived: false, ...bf }),
+            Client.countDocuments({ is_archived: false, ...bf }),
+            ServiceOrder.countDocuments({ is_archived: false, ...bf }),
             Package.countDocuments({ is_active: true }),
-            ServiceOrder.countDocuments({ status: 'completed' }),
+            ServiceOrder.countDocuments({ status: 'completed', ...bf }),
         ]);
 
         // Total revenue from completed orders
         const totalRevenueAgg = await ServiceOrder.aggregate([
-            { $match: { status: 'completed' } },
+            { $match: { status: 'completed', ...bf } },
             { $lookup: { from: 'packages', localField: 'package', foreignField: '_id', as: 'pkg' } },
             { $unwind: '$pkg' },
             { $group: { _id: null, total: { $sum: '$pkg.price' } } }
@@ -273,26 +277,27 @@ exports.adminDashboard = async (req, res, next) => {
 
         // Users by role (donut)
         const usersByRole = await User.aggregate([
+            { $match: bf },
             { $group: { _id: '$role', count: { $sum: 1 } } }
         ]);
 
         // Lead pipeline status breakdown (donut/bar)
         const leadsByStatus = await Lead.aggregate([
-            { $match: { is_archived: false } },
+            { $match: { is_archived: false, ...bf } },
             { $group: { _id: '$status', count: { $sum: 1 } } },
             { $sort: { count: -1 } }
         ]);
 
         // Service order pipeline (bar)
         const ordersByStatus = await ServiceOrder.aggregate([
-            { $match: { is_archived: false } },
+            { $match: { is_archived: false, ...bf } },
             { $group: { _id: '$status', count: { $sum: 1 } } },
             { $sort: { count: -1 } }
         ]);
 
         // Monthly leads created — last 6 months (line chart)
         const leadsOverTime = await Lead.aggregate([
-            { $match: { createdAt: { $gte: sixMonthsAgo } } },
+            { $match: { createdAt: { $gte: sixMonthsAgo }, ...bf } },
             {
                 $group: {
                     _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
@@ -305,7 +310,7 @@ exports.adminDashboard = async (req, res, next) => {
 
         // Monthly revenue — last 6 months (bar chart)
         const revenueOverTime = await ServiceOrder.aggregate([
-            { $match: { status: 'completed', updatedAt: { $gte: sixMonthsAgo } } },
+            { $match: { status: 'completed', updatedAt: { $gte: sixMonthsAgo }, ...bf } },
             { $lookup: { from: 'packages', localField: 'package', foreignField: '_id', as: 'pkg' } },
             { $unwind: '$pkg' },
             {
@@ -320,7 +325,7 @@ exports.adminDashboard = async (req, res, next) => {
 
         // Top packages by revenue
         const topPackages = await ServiceOrder.aggregate([
-            { $match: { status: 'completed' } },
+            { $match: { status: 'completed', ...bf } },
             { $lookup: { from: 'packages', localField: 'package', foreignField: '_id', as: 'pkg' } },
             { $unwind: '$pkg' },
             { $group: { _id: '$pkg.name', count: { $sum: 1 }, revenue: { $sum: '$pkg.price' } } },
@@ -330,7 +335,7 @@ exports.adminDashboard = async (req, res, next) => {
 
         // Sales performance (bar — leads + conversions per rep)
         const salesPerformance = await Lead.aggregate([
-            { $match: { is_archived: false, assigned_to: { $exists: true } } },
+            { $match: { is_archived: false, assigned_to: { $exists: true }, ...bf } },
             {
                 $group: {
                     _id: '$assigned_to',
@@ -348,7 +353,7 @@ exports.adminDashboard = async (req, res, next) => {
 
         // Ops staff completion (bar)
         const opsCompletion = await ServiceOrder.aggregate([
-            { $match: { assigned_to: { $exists: true } } },
+            { $match: { assigned_to: { $exists: true }, ...bf } },
             {
                 $group: {
                     _id: '$assigned_to',
@@ -364,7 +369,7 @@ exports.adminDashboard = async (req, res, next) => {
         ]);
 
         // Recent conversions
-        const recentConversions = await Lead.find({ status: 'converted' })
+        const recentConversions = await Lead.find({ status: 'converted', ...bf })
             .populate('assigned_to', 'name')
             .sort({ updatedAt: -1 })
             .limit(5);

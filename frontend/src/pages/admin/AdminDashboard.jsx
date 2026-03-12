@@ -8,7 +8,8 @@ import {
 import api from '../../api/axios';
 import {
     Users, TrendingUp, Package, CheckCircle, DollarSign,
-    Briefcase, ArrowUpRight, ChevronRight, Activity
+    Briefcase, ArrowUpRight, ChevronRight, Activity,
+    Building2, ChevronDown
 } from 'lucide-react';
 
 // ── Colours ──────────────────────────────────────────────
@@ -98,11 +99,22 @@ const MiniDonut = ({ data, total }) => {
 export default function AdminDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranch, setSelectedBranch] = useState('all');
     const navigate = useNavigate();
 
+    // Fetch branches once on mount
     useEffect(() => {
-        api.get('/dashboard/admin').then(r => setData(r.data.data)).finally(() => setLoading(false));
+        api.get('/branches').then(r => setBranches(r.data.data)).catch(() => { });
     }, []);
+
+    // Fetch dashboard data whenever selectedBranch changes
+    useEffect(() => {
+        setLoading(true);
+        api.get('/dashboard/admin', { params: { branch: selectedBranch } })
+            .then(r => setData(r.data.data))
+            .finally(() => setLoading(false));
+    }, [selectedBranch]);
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
@@ -134,7 +146,38 @@ export default function AdminDashboard() {
                     <div className="page-title">CRM Overview</div>
                     <div className="page-subtitle">System-wide analytics & performance metrics</div>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <Building2 size={16} style={{ position: 'absolute', left: 12, color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                        <select
+                            style={{
+                                appearance: 'none',
+                                width: 220,
+                                padding: '8px 36px 8px 36px',
+                                borderRadius: 12,
+                                border: '1px solid var(--border)',
+                                background: 'white',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: 'var(--ink)',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                transition: 'all 0.2s ease'
+                            }}
+                            value={selectedBranch}
+                            onChange={(e) => setSelectedBranch(e.target.value)}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                        >
+                            <option value="all">🌍 Global (All Branches)</option>
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                    </div>
+
                     <button className="btn btn-outline" onClick={() => navigate('/admin/leads')}>
                         Manage Leads <ChevronRight size={13} />
                     </button>

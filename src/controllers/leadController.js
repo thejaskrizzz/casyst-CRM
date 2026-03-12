@@ -59,11 +59,23 @@ exports.getLead = async (req, res, next) => {
 // @desc    Create lead
 exports.createLead = async (req, res, next) => {
     try {
-        const { name, phone, email, source, interested_package, notes } = req.body;
-        const branchId = req.user.branch?._id || req.user.branch || null;
+        const { name, phone, email, source, interested_package, notes, branch, assigned_to } = req.body;
+
+        let branchId = req.user.branch?._id || req.user.branch || null;
+        let finalAssignedTo = assigned_to || null;
+
+        // If admin, they can explicitly set the branch, and if so, it defaults to unassigned staff.
+        if (req.user.role === 'admin' && branch) {
+            branchId = branch;
+        }
+
+        if (req.user.role === 'sales') {
+            finalAssignedTo = req.user._id;
+        }
+
         const lead = await Lead.create({
             name, phone, email, source, interested_package, notes,
-            assigned_to: req.user.role === 'sales' ? req.user._id : req.body.assigned_to,
+            assigned_to: finalAssignedTo,
             created_by: req.user._id,
             branch: branchId,
             status_history: [{ status: 'new', changed_by: req.user._id, note: 'Lead created' }],
@@ -224,38 +236,49 @@ exports.getLeadActivity = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-// @desc    Assign lead to a sales user (admin/manager only)
+// @desc    Assign lead to a sales user or a branch (admin/manager only)
 exports.assignLead = async (req, res, next) => {
     try {
-        const { assigned_to } = req.body;
+        const { assigned_to, branch } = req.body;
         const lead = await Lead.findById(req.params.id);
         if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
         if (lead.converted) return res.status(400).json({ success: false, message: 'Cannot reassign a converted lead' });
 
-        // Branch guard: a manager can only assign to staff in their own branch
-        if (assigned_to && req.user.branch) {
-            const User = require('../models/User');
-            const assignee = await User.findById(assigned_to).select('branch');
-            if (!assignee) return res.status(404).json({ success: false, message: 'Assignee not found' });
-            const managerBranch = (req.user.branch._id || req.user.branch).toString();
-            const assigneeBranch = (assignee.branch?._id || assignee.branch || '').toString();
-            if (managerBranch !== assigneeBranch) {
-                return res.status(403).json({ success: false, message: 'Cannot assign to staff from a different branch' });
+        // Admin assigning to a branch (unassigns the user)
+        if (req.user.role === 'admin' && branch) {
+            lead.branch = branch;
+            lead.assigned_to = null;
+        }
+        // Manager assigning to a sales rep
+        else if (assigned_to) {
+            if (req.user.branch) {
+                const User = require('../models/User');
+                const assignee = await User.findById(assigned_to).select('branch');
+                if (!assignee) return res.status(404).json({ success: false, message: 'Assignee not found' });
+                const managerBranch = (req.user.branch._id || req.user.branch).toString();
+                const assigneeBranch = (assignee.branch?._id || assignee.branch || '').toString();
+                if (managerBranch !== assigneeBranch) {
+                    return res.status(403).json({ success: false, message: 'Cannot assign to staff from a different branch' });
+                }
             }
+            lead.assigned_to = assigned_to;
+        }
+        // Admin unassigning entirely
+        else {
+            lead.assigned_to = null;
         }
 
-        const prevAssignee = lead.assigned_to;
-        lead.assigned_to = assigned_to || null;
         await lead.save();
 
         await logActivity({
             entity_type: 'lead', entity_id: lead._id,
             action: 'lead_assigned', performed_by: req.user._id,
-            description: `Lead '${lead.name}' assigned by ${req.user.name}`,
+            description: `Lead '${lead.name}' reassigned/routed by ${req.user.name}`,
         });
 
         const updated = await Lead.findById(lead._id)
             .populate('assigned_to', 'name email')
+            .populate('branch', 'name code')
             .populate('interested_package', 'name price');
 
         res.json({ success: true, data: updated });

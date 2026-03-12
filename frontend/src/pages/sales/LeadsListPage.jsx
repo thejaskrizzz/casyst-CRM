@@ -18,7 +18,7 @@ const KANBAN_COLS = [
 ];
 
 // ── Inline assign dropdown ──────────────────────────────
-function AssignCell({ lead, salesUsers, onAssigned, canAssign, compact }) {
+function AssignCell({ lead, assignOptions, onAssigned, canAssign, compact, isAdmin }) {
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const ref = useRef();
@@ -29,10 +29,11 @@ function AssignCell({ lead, salesUsers, onAssigned, canAssign, compact }) {
         return () => document.removeEventListener('mousedown', close);
     }, []);
 
-    const assign = async (userId) => {
+    const assign = async (id) => {
         setSaving(true);
         try {
-            await api.patch(`/leads/${lead._id}/assign`, { assigned_to: userId || null });
+            const payload = isAdmin ? { branch: id || null, assigned_to: null } : { assigned_to: id || null };
+            await api.patch(`/leads/${lead._id}/assign`, payload);
             onAssigned();
         } catch (err) { alert(err.response?.data?.message || 'Failed to assign'); }
         finally { setSaving(false); setOpen(false); }
@@ -40,9 +41,15 @@ function AssignCell({ lead, salesUsers, onAssigned, canAssign, compact }) {
 
     if (!canAssign) {
         return compact
-            ? <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{lead.assigned_to?.name || 'Unassigned'}</span>
-            : <span className="td-muted">{lead.assigned_to?.name || '—'}</span>;
+            ? <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>{lead.assigned_to?.name || (lead.branch && !isAdmin ? lead.branch.name : 'Unassigned')}</span>
+            : <span className="td-muted">{lead.assigned_to?.name || (lead.branch && !isAdmin ? lead.branch.name : '—')}</span>;
     }
+
+    const currentName = isAdmin
+        ? (lead.branch?.name || (lead.assigned_to ? 'Staff Assigned' : 'Unassigned'))
+        : (lead.assigned_to?.name || 'Assign');
+
+    const isActive = isAdmin ? lead.branch : lead.assigned_to;
 
     return (
         <div style={{ position: 'relative' }} ref={ref}>
@@ -50,15 +57,15 @@ function AssignCell({ lead, salesUsers, onAssigned, canAssign, compact }) {
                 className="btn btn-ghost btn-sm"
                 style={{
                     display: 'flex', alignItems: 'center', gap: 5, fontSize: compact ? 11 : 12,
-                    color: lead.assigned_to ? 'var(--ink-2)' : 'var(--s-medium-ink)',
-                    background: lead.assigned_to ? 'transparent' : 'var(--s-medium)',
+                    color: isActive ? 'var(--ink-2)' : 'var(--s-medium-ink)',
+                    background: isActive ? 'transparent' : 'var(--s-medium)',
                     borderRadius: 999, padding: compact ? '2px 8px' : '4px 10px',
                 }}
                 onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
                 disabled={saving || lead.converted}
             >
                 <UserCheck size={compact ? 10 : 12} />
-                {saving ? '…' : (lead.assigned_to?.name || 'Assign')}
+                {saving ? '…' : currentName}
             </button>
             {open && (
                 <div style={{
@@ -71,21 +78,21 @@ function AssignCell({ lead, salesUsers, onAssigned, canAssign, compact }) {
                         style={{ padding: '7px 12px', fontSize: 12, cursor: 'pointer', borderRadius: 8, color: 'var(--ink-3)' }}
                         onClick={() => assign(null)}
                     >— Unassign —</div>
-                    {salesUsers.map(u => (
-                        <div key={u._id} style={{
+                    {assignOptions.map(opt => (
+                        <div key={opt._id} style={{
                             padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderRadius: 8,
                             display: 'flex', alignItems: 'center', gap: 8,
-                            fontWeight: lead.assigned_to?._id === u._id ? 600 : 400,
+                            fontWeight: (isAdmin ? lead.branch?._id : lead.assigned_to?._id) === opt._id ? 600 : 400,
                         }}
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            onClick={() => assign(u._id)}
+                            onClick={() => assign(opt._id)}
                         >
-                            <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>{u.name?.charAt(0)}</div>
-                            {u.name}
+                            <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>{opt.name?.charAt(0)}</div>
+                            {opt.name}
                         </div>
                     ))}
-                    {salesUsers.length === 0 && <div style={{ padding: '7px 12px', fontSize: 12, color: 'var(--ink-3)' }}>No active sales staff</div>}
+                    {assignOptions.length === 0 && <div style={{ padding: '7px 12px', fontSize: 12, color: 'var(--ink-3)' }}>{isAdmin ? 'No branches found' : 'No active sales staff'}</div>}
                 </div>
             )}
         </div>
@@ -150,7 +157,7 @@ function KanbanCard({ lead, canAssign, salesUsers, onAssigned, onView, onDragSta
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                 <span style={{ fontSize: 10, color: 'var(--ink-3)', textTransform: 'capitalize' }}>{lead.source}</span>
                 <div onClick={e => e.stopPropagation()}>
-                    <AssignCell lead={lead} salesUsers={salesUsers} canAssign={canAssign && !lead.converted} onAssigned={onAssigned} compact />
+                    <AssignCell lead={lead} assignOptions={salesUsers} canAssign={canAssign && !lead.converted} onAssigned={onAssigned} compact isAdmin={false} />
                 </div>
             </div>
         </div>
@@ -158,7 +165,7 @@ function KanbanCard({ lead, canAssign, salesUsers, onAssigned, onView, onDragSta
 }
 
 // ── Full Kanban Board with DnD ───────────────────────────────────────
-function KanbanBoard({ leads, canAssign, salesUsers, onAssigned, onView, onStatusChange }) {
+function KanbanBoard({ leads, canAssign, assignOptions, onAssigned, onView, onStatusChange, isAdmin }) {
     const [draggingId, setDraggingId] = useState(null);
     const [overCol, setOverCol] = useState(null);
     const grouped = {};
@@ -245,10 +252,11 @@ function KanbanBoard({ leads, canAssign, salesUsers, onAssigned, onView, onStatu
                             key={lead._id}
                             lead={lead}
                             canAssign={canAssign}
-                            salesUsers={salesUsers}
+                            salesUsers={assignOptions}
                             onAssigned={onAssigned}
                             onView={onView}
                             onDragStart={(e, l) => handleDragStart(e, l)}
+                            isAdmin={isAdmin}
                         />
                     ))}
                     {overCol === col.id && grouped[col.id]?.length > 0 && (
@@ -278,7 +286,7 @@ export default function LeadsListPage() {
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({ name: '', phone: '', email: '', source: 'website', notes: '', interested_package: '', assigned_to: '' });
     const [packages, setPackages] = useState([]);
-    const [salesUsers, setSalesUsers] = useState([]);
+    const [assignOptions, setAssignOptions] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
     const canAssign = ['admin', 'manager'].includes(user.role);
@@ -300,12 +308,13 @@ export default function LeadsListPage() {
     useEffect(() => {
         api.get('/packages').then(r => setPackages(r.data.data)).catch(() => { });
         if (canAssign) {
-            const params = { role: 'sales', status: 'active', limit: 100 };
-            // Branch-scoped managers only see their own branch's sales staff
-            if (user.branch) params.branch = user.branch._id || user.branch;
-            api.get('/users', { params }).then(r => {
-                setSalesUsers(r.data.data || []);
-            }).catch(() => { });
+            if (user.role === 'admin') {
+                api.get('/branches').then(r => setAssignOptions(r.data.data || [])).catch(() => { });
+            } else {
+                const params = { role: 'sales', status: 'active', limit: 100 };
+                if (user.branch) params.branch = user.branch._id || user.branch;
+                api.get('/users', { params }).then(r => setAssignOptions(r.data.data || [])).catch(() => { });
+            }
         }
     }, []);
 
@@ -314,6 +323,10 @@ export default function LeadsListPage() {
         try {
             const payload = { ...form };
             if (!payload.assigned_to) delete payload.assigned_to;
+            if (user.role === 'admin' && payload.assigned_to) {
+                payload.branch = payload.assigned_to;
+                delete payload.assigned_to;
+            }
             if (!payload.interested_package) delete payload.interested_package;
             await api.post('/leads', payload);
             setShowModal(false);
@@ -391,10 +404,11 @@ export default function LeadsListPage() {
                     : <KanbanBoard
                         leads={leads}
                         canAssign={canAssign}
-                        salesUsers={salesUsers}
+                        assignOptions={assignOptions}
                         onAssigned={fetchLeads}
                         onView={goToDetail}
                         onStatusChange={handleStatusChange}
+                        isAdmin={user.role === 'admin'}
                     />
             )}
 
@@ -431,7 +445,7 @@ export default function LeadsListPage() {
                                         <td className="td-muted">{l.interested_package?.name || '—'}</td>
                                         <td><span className={`pill pill-${l.status}`}>{l.status?.replace(/_/g, ' ')}</span></td>
                                         <td onClick={e => e.stopPropagation()}>
-                                            <AssignCell lead={l} salesUsers={salesUsers} canAssign={canAssign && !l.converted} onAssigned={fetchLeads} />
+                                            <AssignCell lead={l} assignOptions={assignOptions} canAssign={canAssign && !l.converted} onAssigned={fetchLeads} isAdmin={user.role === 'admin'} />
                                         </td>
                                         <td onClick={e => e.stopPropagation()}>
                                             <button className="icon-btn" onClick={() => goToDetail(l._id)} title="View"><Eye size={13} /></button>
@@ -482,10 +496,10 @@ export default function LeadsListPage() {
                             </div>
                             {canAssign && (
                                 <div className="form-group">
-                                    <label className="form-label">Assign To (Sales Staff)</label>
+                                    <label className="form-label">{user.role === 'admin' ? 'Assign To (Branch)' : 'Assign To (Sales Staff)'}</label>
                                     <select className="form-select" value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })}>
                                         <option value="">— Unassigned —</option>
-                                        {salesUsers.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
+                                        {assignOptions.map(opt => <option key={opt._id} value={opt._id}>{opt.name}</option>)}
                                     </select>
                                 </div>
                             )}

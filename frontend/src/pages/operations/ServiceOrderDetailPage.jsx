@@ -266,6 +266,7 @@ export default function ServiceOrderDetailPage() {
                         <ArrowLeft size={16} />
                     </button>
                     <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', letterSpacing: '0.5px', marginBottom: 2 }}>{order.order_id || 'Order Details'}</div>
                         <div className="page-title">{order.client?.company_name}</div>
                         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                             <span className={`pill pill-${order.status}`}>{order.status?.replace(/_/g, ' ')}</span>
@@ -359,6 +360,7 @@ export default function ServiceOrderDetailPage() {
                             )}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                            <LV label="Order ID" value={order.order_id} color="var(--accent)" />
                             <LV label="Client" value={order.client?.company_name} />
                             <LV label="Contact Person" value={order.client?.contact_person} />
                             <LV label="Phone" value={order.client?.phone} />

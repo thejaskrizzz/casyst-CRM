@@ -60,6 +60,10 @@ function SOKanbanCard({ order, onView, onDragStart }) {
                     <Eye size={11} />
                 </button>
             </div>
+            {/* Order ID */}
+            <div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, marginBottom: 8, letterSpacing: '0.5px' }}>
+                {order.order_id || 'No ID'}
+            </div>
             {/* Tags row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <span className={`pill pill-${order.priority}`} style={{ fontSize: 10 }}>{order.priority}</span>
@@ -253,7 +257,7 @@ export default function ServiceOrdersListPage() {
                     <div className="table-container">
                         <table>
                             <thead>
-                                <tr><th>Client</th><th>Package</th><th>Assigned To</th><th>Priority</th><th>Due Date</th><th>Status</th><th></th></tr>
+                                <tr><th>Order ID</th><th>Client</th><th>Package</th><th>Assigned To</th><th>Priority</th><th>Due Date</th><th>Status</th><th></th></tr>
                             </thead>
                             <tbody>
                                 {loading ? (
@@ -270,6 +274,7 @@ export default function ServiceOrdersListPage() {
                                     const isOverdue = dueDate && dueDate < new Date() && o.status !== 'completed' && o.status !== 'rejected';
                                     return (
                                         <tr key={o._id} style={{ cursor: 'pointer' }} onClick={() => goToDetail(o._id)}>
+                                            <td style={{ fontWeight: 600, fontSize: 13, letterSpacing: '0.5px' }}>{o.order_id || '—'}</td>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                                     <div className="avatar">{o.client?.company_name?.charAt(0)}</div>

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getServiceOrders, getServiceOrder, createServiceOrder, updateServiceOrder,
-    updateStatus, assignServiceOrder, getServiceOrderActivity,
+    updateStatus, assignServiceOrder, getServiceOrderActivity, trackServiceOrder,
     addPayment, deletePayment, approvePayment, rejectPayment,
     addExpense, deleteExpense,
 } = require('../controllers/serviceOrderController');
@@ -13,6 +13,9 @@ const { authorize } = require('../middleware/rbac');
 const upload = require('../middleware/upload');
 
 router.use(protect);
+
+// Track order by orderId
+router.get('/track/:orderId', authorize('admin', 'manager', 'operations', 'sales'), trackServiceOrder);
 
 // List + create
 router.route('/')

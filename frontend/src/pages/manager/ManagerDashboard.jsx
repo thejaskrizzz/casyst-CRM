@@ -159,6 +159,17 @@ export default function ManagerDashboard() {
                 </div>
             )}
 
+            {/* Unassigned Leads alert */}
+            {(data.unassigned_leads > 0) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px', borderRadius: 12, background: '#fff8e1', border: '1px solid #ffca2840', marginBottom: 20 }}>
+                    <Users size={16} style={{ color: '#f57f17', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#f57f17', flex: 1 }}>
+                        <strong>{data.unassigned_leads}</strong> new lead{data.unassigned_leads > 1 ? 's are' : ' is'} waiting in your branch queue — please assign to a sales rep
+                    </span>
+                    <button className="btn btn-primary btn-sm" onClick={() => navigate('/manager/leads')}>Assign Leads →</button>
+                </div>
+            )}
+
             {/* ── Daily & Monthly summary strip ── */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#1976d210)', border: '1px solid #5c6bc030' }}>

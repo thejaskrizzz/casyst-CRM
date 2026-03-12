@@ -54,7 +54,8 @@ exports.getServiceOrder = async (req, res, next) => {
             .populate('lead', 'name phone email status')
             .populate('quote', 'reference_no total subtotal discount_pct tax_pct items contact_name')
             .populate('status_history.changed_by', 'name')
-            .populate('payments.recorded_by', 'name');
+            .populate('payments.recorded_by', 'name')
+            .populate('branch', 'name code');
         if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
 
         // Operations can only see their own
@@ -63,6 +64,40 @@ exports.getServiceOrder = async (req, res, next) => {
         // Sales can only see orders they created
         if (req.user.role === 'sales' && order.created_by?._id?.toString() !== req.user._id.toString())
             return res.status(403).json({ success: false, message: 'Access denied' });
+
+        res.json({ success: true, data: order });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── GET single by order_id ──────────── */
+exports.trackServiceOrder = async (req, res, next) => {
+    try {
+        const order = await ServiceOrder.findOne({ order_id: req.params.orderId })
+            .populate('client', 'company_name contact_person phone email lead')
+            .populate('package', 'name price estimated_days required_documents')
+            .populate('assigned_to', 'name email')
+            .populate('assigned_by', 'name')
+            .populate('created_by', 'name role')
+            .populate('converted_by', 'name')
+            .populate('status_history.changed_by', 'name')
+            .populate('branch', 'name code');
+
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        // Access checks for branch scoping and role permissions
+        if (req.user.role === 'operations' && order.assigned_to?._id?.toString() !== req.user._id.toString())
+            return res.status(403).json({ success: false, message: 'Access denied: You are not assigned to this order' });
+        if (req.user.role === 'sales' && order.created_by?._id?.toString() !== req.user._id.toString())
+            return res.status(403).json({ success: false, message: 'Access denied: You did not create this order' });
+
+        const scopedRoles = ['manager', 'sales', 'operations'];
+        if (scopedRoles.includes(req.user.role) && req.user.branch) {
+            const orderBranchStr = order.branch ? (order.branch._id || order.branch).toString() : null;
+            const userBranchStr = (req.user.branch._id || req.user.branch).toString();
+            if (orderBranchStr && orderBranchStr !== userBranchStr) {
+                return res.status(403).json({ success: false, message: 'Access denied: Order belongs to a different branch' });
+            }
+        }
 
         res.json({ success: true, data: order });
     } catch (err) { next(err); }
@@ -141,6 +176,7 @@ exports.createServiceOrder = async (req, res, next) => {
             project_notes: project_notes || '',
             priority: priority || 'medium',
             due_date: due_date || null,
+            branch: req.user.branch ? (req.user.branch._id || req.user.branch) : null,
             converted_by: req.user._id,
             converted_at: new Date(),
             created_by: req.user._id,

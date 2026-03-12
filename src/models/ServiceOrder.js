@@ -36,6 +36,7 @@ const expenseSchema = new mongoose.Schema({
 module.exports.EXPENSE_CATEGORIES = EXPENSE_CATEGORIES;
 
 const serviceOrderSchema = new mongoose.Schema({
+    order_id: { type: String, unique: true },
     client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
     package: { type: mongoose.Schema.Types.ObjectId, ref: 'Package', required: true },
     lead: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead' },
@@ -75,6 +76,16 @@ const serviceOrderSchema = new mongoose.Schema({
 
 // Auto-recompute payment fields before save (only approved payments count)
 serviceOrderSchema.pre('save', async function () {
+    if (this.isNew || !this.order_id) {
+        let unique = false;
+        while (!unique) {
+            const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+            this.order_id = `ORD-${Date.now().toString().slice(-4)}${randomStr}`;
+            const existing = await mongoose.models.ServiceOrder.findOne({ order_id: this.order_id });
+            if (!existing) unique = true;
+        }
+    }
+
     const paid = this.payments
         .filter(p => p.status === 'approved')
         .reduce((s, p) => s + (p.amount || 0), 0);

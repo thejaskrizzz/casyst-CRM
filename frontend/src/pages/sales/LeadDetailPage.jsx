@@ -4,7 +4,7 @@ import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     ArrowLeft, Phone, Mail, Building2, Calendar, Edit3, Check,
-    X, MessageSquare, Clock, AlertCircle, RefreshCw, Receipt, ExternalLink
+    X, MessageSquare, Clock, AlertCircle, RefreshCw, Receipt, ExternalLink, UserCheck
 } from 'lucide-react';
 
 const STATUSES = ['new', 'contacted', 'followup', 'interested', 'not_interested', 'lost'];
@@ -17,6 +17,84 @@ const statusFlow = {
     not_interested: ['followup', 'interested', 'lost'],
     lost: ['followup'],
 };
+
+// ── Inline assign dropdown ──────────────────────────────
+function AssignCell({ lead, assignOptions, onAssigned, canAssign, isAdmin }) {
+    const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    // In React 18 / functional components, we need a ref to handle outside clicks
+    // We'll just define the ref directly in the component since it's simple enough
+    const [refReady, setRefReady] = useState(false);
+
+    const assign = async (id) => {
+        setSaving(true);
+        try {
+            const payload = isAdmin ? { branch: id || null, assigned_to: null } : { assigned_to: id || null };
+            await api.patch(`/leads/${lead._id}/assign`, payload);
+            onAssigned();
+        } catch (err) { alert(err.response?.data?.message || 'Failed to assign'); }
+        finally { setSaving(false); setOpen(false); }
+    };
+
+    if (!canAssign) {
+        return <span style={{ textTransform: 'none' }}>{lead.assigned_to?.name || (lead.branch && !isAdmin ? lead.branch.name : 'Unassigned')}</span>;
+    }
+
+    const currentName = isAdmin
+        ? (lead.branch?.name || (lead.assigned_to ? 'Staff Assigned' : 'Unassigned'))
+        : (lead.assigned_to?.name || 'Assign');
+
+    const isActive = isAdmin ? lead.branch : lead.assigned_to;
+
+    return (
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+                className="btn btn-ghost btn-sm"
+                style={{
+                    display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
+                    color: isActive ? 'var(--ink-2)' : 'var(--s-medium-ink)',
+                    background: isActive ? 'transparent' : 'var(--s-medium)',
+                    borderRadius: 999, padding: '2px 8px', height: 24, margin: '-4px 0',
+                    border: '1px solid var(--border)'
+                }}
+                onClick={() => setOpen(!open)}
+                disabled={saving || lead.converted}
+            >
+                <UserCheck size={12} />
+                {saving ? '…' : currentName}
+            </button>
+            {open && (
+                <div style={{
+                    position: 'absolute', top: '110%', left: 0, zIndex: 999,
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-lg)', padding: 6, minWidth: 200,
+                    boxShadow: 'var(--shadow-lg)', maxHeight: 240, overflowY: 'auto',
+                }}>
+                    <div
+                        style={{ padding: '7px 12px', fontSize: 12, cursor: 'pointer', borderRadius: 8, color: 'var(--ink-3)' }}
+                        onClick={() => assign(null)}
+                    >— Unassign —</div>
+                    {assignOptions.map(opt => (
+                        <div key={opt._id} style={{
+                            padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderRadius: 8,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            fontWeight: (isAdmin ? lead.branch?._id : lead.assigned_to?._id) === opt._id ? 600 : 400,
+                        }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            onClick={() => assign(opt._id)}
+                        >
+                            <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>{opt.name?.charAt(0)}</div>
+                            {opt.name}
+                        </div>
+                    ))}
+                    {assignOptions.length === 0 && <div style={{ padding: '7px 12px', fontSize: 12, color: 'var(--ink-3)' }}>{isAdmin ? 'No branches found' : 'No active sales staff'}</div>}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function LeadDetailPage() {
     const { id } = useParams();
@@ -45,6 +123,9 @@ export default function LeadDetailPage() {
     const [convertForm, setConvertForm] = useState({ company_name: '', priority: 'medium', due_date: '', assigned_to_ops: '' });
     const [converting, setConverting] = useState(false);
     const [opsUsers, setOpsUsers] = useState([]);
+
+    // Assign options
+    const [assignOptions, setAssignOptions] = useState([]);
 
     // Quotes for this lead
     const [quotes, setQuotes] = useState([]);
@@ -81,6 +162,19 @@ export default function LeadDetailPage() {
             api.get('/users', { params }).then(r => {
                 setOpsUsers(r.data.data || []);
             }).catch(() => { });
+        }
+    }, []);
+
+    // Load branch or staff assignment options
+    useEffect(() => {
+        if (canAssign) {
+            if (user.role === 'admin') {
+                api.get('/branches').then(r => setAssignOptions(r.data.data || [])).catch(() => { });
+            } else {
+                const params = { role: 'sales', status: 'active', limit: 100 };
+                if (user.branch) params.branch = user.branch._id || user.branch;
+                api.get('/users', { params }).then(r => setAssignOptions(r.data.data || [])).catch(() => { });
+            }
         }
     }, []);
 
@@ -182,13 +276,17 @@ export default function LeadDetailPage() {
                                 { icon: Building2, label: 'Source', value: lead.source, cap: true },
                                 { icon: Calendar, label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
                                 { icon: Building2, label: 'Interested Package', value: lead.interested_package?.name || '—' },
-                                { icon: Building2, label: 'Assigned To', value: lead.assigned_to?.name || 'Unassigned' },
-                            ].map(({ icon: Icon, label, value, cap }) => (
+                                { icon: Building2, label: user.role === 'admin' ? 'Assigned To (Branch)' : 'Assigned To', isAssign: true },
+                            ].map(({ icon: Icon, label, value, cap, isAssign }) => (
                                 <div key={label}>
                                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>{label}</div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink)', fontSize: 14 }}>
                                         <Icon size={14} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
-                                        <span style={{ textTransform: cap ? 'capitalize' : 'none' }}>{value}</span>
+                                        {isAssign ? (
+                                            <AssignCell lead={lead} assignOptions={assignOptions} onAssigned={fetchLead} canAssign={canAssign && !isConverted} isAdmin={user.role === 'admin'} />
+                                        ) : (
+                                            <span style={{ textTransform: cap ? 'capitalize' : 'none' }}>{value}</span>
+                                        )}
                                     </div>
                                 </div>
                             ))}

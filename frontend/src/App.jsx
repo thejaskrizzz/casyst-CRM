@@ -41,6 +41,7 @@ import ManualInvoicePage from './pages/accountant/ManualInvoicePage';
 
 // Shared
 import MyTasksPage from './pages/shared/MyTasksPage';
+import TrackOrderPage from './pages/shared/TrackOrderPage';
 
 const Unauthorized = () => (
   <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="staff-performance" element={<StaffPerformance />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
+            <Route path="track-order" element={<TrackOrderPage />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
@@ -93,6 +95,7 @@ export default function App() {
             <Route path="clients" element={<div style={{ padding: 24 }}><h2>Clients</h2></div>} />
             <Route path="packages" element={<PackagesPage />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
+            <Route path="track-order" element={<TrackOrderPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -107,6 +110,7 @@ export default function App() {
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="followups" element={<LeadsListPage />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
+            <Route path="track-order" element={<TrackOrderPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 
@@ -117,6 +121,7 @@ export default function App() {
             <Route path="service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="expenses" element={<ExpensesPage />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
+            <Route path="track-order" element={<TrackOrderPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

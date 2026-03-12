@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     LayoutDashboard, Users, Package, TrendingUp, Briefcase,
-    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award, CheckCircle, ClipboardList
+    FileText, Moon, Sun, Building2, LogOut, Receipt, Settings, BarChart2, Award, CheckCircle, ClipboardList, Search
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
@@ -17,6 +17,7 @@ const navConfig = {
         { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
         { label: 'Staff Performance', to: '/admin/staff-performance', icon: Award },
         { label: 'My Tasks', to: '/admin/my-tasks', icon: ClipboardList },
+        { label: 'Track Order', to: '/admin/track-order', icon: Search },
         { label: 'Settings', to: '/admin/settings', icon: Settings },
     ],
 
@@ -28,6 +29,7 @@ const navConfig = {
         { label: 'Clients', to: '/manager/clients', icon: Building2 },
         { label: 'Packages', to: '/manager/packages', icon: Package },
         { label: 'My Tasks', to: '/manager/my-tasks', icon: ClipboardList },
+        { label: 'Track Order', to: '/manager/track-order', icon: Search },
     ],
     sales: [
         { label: 'Dashboard', to: '/sales/dashboard', icon: LayoutDashboard },
@@ -36,12 +38,14 @@ const navConfig = {
         { label: 'My Orders', to: '/sales/service-orders', icon: Briefcase },
         { label: 'Followups', to: '/sales/followups', icon: FileText },
         { label: 'My Tasks', to: '/sales/my-tasks', icon: ClipboardList },
+        { label: 'Track Order', to: '/sales/track-order', icon: Search },
     ],
     operations: [
         { label: 'Dashboard', to: '/operations/dashboard', icon: LayoutDashboard },
         { label: 'Service Orders', to: '/operations/service-orders', icon: Briefcase },
         { label: 'Expenses', to: '/operations/expenses', icon: Receipt },
         { label: 'My Tasks', to: '/operations/my-tasks', icon: ClipboardList },
+        { label: 'Track Order', to: '/operations/track-order', icon: Search },
     ],
     accountant: [
         { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
