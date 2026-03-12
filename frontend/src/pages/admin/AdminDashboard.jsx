@@ -9,7 +9,7 @@ import api from '../../api/axios';
 import {
     Users, TrendingUp, Package, CheckCircle, DollarSign,
     Briefcase, ArrowUpRight, ChevronRight, Activity,
-    Building2, ChevronDown
+    Building2, ChevronDown, Calendar
 } from 'lucide-react';
 
 // ── Colours ──────────────────────────────────────────────
@@ -100,7 +100,13 @@ export default function AdminDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [branches, setBranches] = useState([]);
+
+    // Filters
     const [selectedBranch, setSelectedBranch] = useState('all');
+    const [datePreset, setDatePreset] = useState('all');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
+
     const navigate = useNavigate();
 
     // Fetch branches once on mount
@@ -108,13 +114,49 @@ export default function AdminDashboard() {
         api.get('/branches').then(r => setBranches(r.data.data)).catch(() => { });
     }, []);
 
-    // Fetch dashboard data whenever selectedBranch changes
+    // Fetch dashboard data whenever branch or date filters change
     useEffect(() => {
         setLoading(true);
-        api.get('/dashboard/admin', { params: { branch: selectedBranch } })
+        let from, to;
+
+        if (datePreset === 'today') {
+            const d = new Date(); d.setHours(0, 0, 0, 0);
+            from = d.toISOString();
+            const end = new Date(); end.setHours(23, 59, 59, 999);
+            to = end.toISOString();
+        } else if (datePreset === 'yesterday') {
+            const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(0, 0, 0, 0);
+            from = d.toISOString();
+            const end = new Date(d); end.setHours(23, 59, 59, 999);
+            to = end.toISOString();
+        } else if (datePreset === 'this_month') {
+            const now = new Date();
+            const d = new Date(now.getFullYear(), now.getMonth(), 1);
+            from = d.toISOString();
+            to = new Date().toISOString();
+        } else if (datePreset === 'last_month') {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+            from = start.toISOString();
+            to = end.toISOString();
+        } else if (datePreset === 'custom' && customFrom && customTo) {
+            from = new Date(customFrom).toISOString();
+            const endDate = new Date(customTo);
+            endDate.setHours(23, 59, 59, 999);
+            to = endDate.toISOString();
+        }
+
+        const params = { branch: selectedBranch };
+        if (from && to) {
+            params.from = from;
+            params.to = to;
+        }
+
+        api.get('/dashboard/admin', { params })
             .then(r => setData(r.data.data))
             .finally(() => setLoading(false));
-    }, [selectedBranch]);
+    }, [selectedBranch, datePreset, customFrom, customTo]);
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}>
@@ -146,7 +188,61 @@ export default function AdminDashboard() {
                     <div className="page-title">CRM Overview</div>
                     <div className="page-subtitle">System-wide analytics & performance metrics</div>
                 </div>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Date Preset Selector */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <Calendar size={16} style={{ position: 'absolute', left: 12, color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                        <select
+                            style={{
+                                appearance: 'none',
+                                width: 160,
+                                padding: '8px 36px 8px 36px',
+                                borderRadius: 12,
+                                border: '1px solid var(--border)',
+                                background: 'white',
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: 'var(--ink)',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                transition: 'all 0.2s ease'
+                            }}
+                            value={datePreset}
+                            onChange={(e) => setDatePreset(e.target.value)}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                        >
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="custom">Custom Range...</option>
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                    </div>
+
+                    {/* Custom Date Inputs (only show if preset is custom) */}
+                    {datePreset === 'custom' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'white', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <input
+                                type="date"
+                                value={customFrom}
+                                onChange={(e) => setCustomFrom(e.target.value)}
+                                style={{ border: 'none', outline: 'none', fontSize: 12, color: 'var(--ink)', background: 'transparent' }}
+                            />
+                            <span style={{ color: 'var(--ink-3)', fontSize: 12 }}>to</span>
+                            <input
+                                type="date"
+                                value={customTo}
+                                onChange={(e) => setCustomTo(e.target.value)}
+                                style={{ border: 'none', outline: 'none', fontSize: 12, color: 'var(--ink)', background: 'transparent' }}
+                            />
+                        </div>
+                    )}
+
+                    {/* Branch Selector */}
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <Building2 size={16} style={{ position: 'absolute', left: 12, color: 'var(--ink-3)', pointerEvents: 'none' }} />
                         <select
