@@ -13,10 +13,10 @@ const roleRedirect = {
 
 const demos = [
     { label: 'Admin', role: 'admin', email: 'admin@casyst.com', pw: 'admin123' },
-    { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
-    { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
-    { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
-    { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
+    // { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
+    // { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
+    // { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
+    // { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
 ];
 
 export default function LoginPage() {
@@ -61,7 +61,7 @@ export default function LoginPage() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 16, fontWeight: 800, color: '#fff',
                     }}>C</div>
-                    <span style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>Casyst CRM</span>
+                    <span style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>CRM HUB</span>
                 </div>
 
                 {/* Center copy */}
