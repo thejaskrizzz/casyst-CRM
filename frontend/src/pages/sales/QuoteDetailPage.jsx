@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { ArrowLeft, Plus, Trash2, RefreshCw, Edit3, X, Check, AlertCircle, Search, User, Package, Rocket, Calendar, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, RefreshCw, Edit3, X, Check, AlertCircle, Search, User, Package, Rocket, Calendar, ChevronDown, FileDown } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { generateQuote } from '../../utils/generateQuote';
 
 const STATUS_OPTS = ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'revised'];
 const STATUS_META = {
@@ -349,6 +350,7 @@ export default function QuoteDetailPage() {
     const [editing, setEditing] = useState(isNew);
     const [saving, setSaving] = useState(false);
     const [preselectedLead, setPreselectedLead] = useState(null);
+    const [settings, setSettings] = useState(null);
 
     // Status modal
     const [statusModal, setStatusModal] = useState(false);
@@ -397,9 +399,15 @@ export default function QuoteDetailPage() {
     useEffect(() => {
         if (!isNew) {
             setLoading(true);
-            api.get(`/quotes/${id}`)
-                .then(r => setQuote(r.data.data))
-                .catch(e => setError(e.response?.data?.message || 'Failed to load quote'))
+            Promise.all([
+                api.get(`/quotes/${id}`),
+                api.get('/settings')
+            ])
+                .then(([quoteRes, settingsRes]) => {
+                    setQuote(quoteRes.data.data);
+                    setSettings(settingsRes.data.data);
+                })
+                .catch(e => setError(e.response?.data?.message || 'Failed to load quote info'))
                 .finally(() => setLoading(false));
         }
     }, [id]);
@@ -503,6 +511,9 @@ export default function QuoteDetailPage() {
                             <Rocket size={13} /> Create Order
                         </button>
                     )}
+                    <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => generateQuote(quote, settings)}>
+                        <FileDown size={13} /> Download PDF
+                    </button>
                     <button className="btn btn-outline" onClick={() => { setNewStatus(''); setStatusModal(true); }}>
                         <RefreshCw size={13} /> Update Status
                     </button>

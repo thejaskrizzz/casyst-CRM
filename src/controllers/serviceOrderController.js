@@ -32,7 +32,7 @@ exports.getServiceOrders = async (req, res, next) => {
             .populate('assigned_to', 'name email')
             .populate('assigned_by', 'name')
             .populate('quote', 'reference_no total')
-            .populate('branch', 'name code')
+            .populate('branch', 'name code address phone email tagline website logo_url gst_number pan_number invoice_prefix quote_prefix')
             .skip((page - 1) * limit).limit(Number(limit))
             .sort({ createdAt: -1 });
 
@@ -55,7 +55,7 @@ exports.getServiceOrder = async (req, res, next) => {
             .populate('quote', 'reference_no total subtotal discount_pct tax_pct items contact_name')
             .populate('status_history.changed_by', 'name')
             .populate('payments.recorded_by', 'name')
-            .populate('branch', 'name code');
+            .populate('branch', 'name code address phone email tagline website logo_url gst_number pan_number invoice_prefix quote_prefix');
         if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
 
         // Operations can only see their own

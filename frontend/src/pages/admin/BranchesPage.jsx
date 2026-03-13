@@ -29,30 +29,30 @@ export default function BranchesPage() {
         if (!form.name.trim() || !form.code.trim()) { toast.error('Name and Code are required'); return; }
         setSaving(true);
         try {
-            if (editing) { await api.patch(`/branches/${editing._id}`, form); toast.success('Branch updated'); }
-            else { await api.post('/branches', form); toast.success('Branch created'); }
+            if (editing) { await api.patch(`/branches/${editing._id}`, form); toast.success('Company updated'); }
+            else { await api.post('/branches', form); toast.success('Company created'); }
             setModal(false);
             load();
-        } catch (err) { toast.error(err.response?.data?.message || 'Failed to save branch'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Failed to save company'); }
         finally { setSaving(false); }
     };
 
     const toggleActive = async (b) => {
         try {
             await api.patch(`/branches/${b._id}`, { is_active: !b.is_active });
-            toast.success(b.is_active ? 'Branch deactivated' : 'Branch activated');
+            toast.success(b.is_active ? 'Company deactivated' : 'Company activated');
             load();
-        } catch { toast.error('Failed to update branch'); }
+        } catch { toast.error('Failed to update company'); }
     };
 
     return (
         <div style={{ maxWidth: 860, paddingBottom: 40 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 700 }}>Branches</h1>
-                    <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 4 }}>Manage company branches. Each branch has its own manager, sales, and operations team.</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 700 }}>Companies</h1>
+                    <p style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 4 }}>Manage system companies. Each company has its own manager, sales, and operations team.</p>
                 </div>
-                <button className="btn btn-primary" style={{ gap: 6 }} onClick={openCreate}><Plus size={14} /> New Branch</button>
+                <button className="btn btn-primary" style={{ gap: 6 }} onClick={openCreate}><Plus size={14} /> New Company</button>
             </div>
 
             {loading ? (
@@ -60,8 +60,8 @@ export default function BranchesPage() {
             ) : branches.length === 0 ? (
                 <div className="card" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-3)' }}>
                     <Building2 size={40} style={{ opacity: 0.2, display: 'block', margin: '0 auto 12px' }} />
-                    <p style={{ fontWeight: 500 }}>No branches yet</p>
-                    <button className="btn btn-primary" style={{ marginTop: 16, gap: 6 }} onClick={openCreate}><Plus size={13} /> Create First Branch</button>
+                    <p style={{ fontWeight: 500 }}>No companies yet</p>
+                    <button className="btn btn-primary" style={{ marginTop: 16, gap: 6 }} onClick={openCreate}><Plus size={13} /> Create First Company</button>
                 </div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
@@ -96,17 +96,17 @@ export default function BranchesPage() {
                 <div className="modal-overlay" onClick={() => setModal(false)}>
                     <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <span className="modal-title">{editing ? 'Edit Branch' : '🏢 New Branch'}</span>
+                            <span className="modal-title">{editing ? 'Edit Company' : '🏢 New Company'}</span>
                             <button className="icon-btn" onClick={() => setModal(false)}><X size={14} /></button>
                         </div>
                         <form onSubmit={save}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                                    <label className="form-label">Branch Name *</label>
+                                    <label className="form-label">Company Name *</label>
                                     <input className="form-input" required placeholder="e.g. Mumbai HQ" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Branch Code *</label>
+                                    <label className="form-label">Company Code *</label>
                                     <input className="form-input" required placeholder="e.g. MUM" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} maxLength={10} />
                                 </div>
                                 <div className="form-group">
@@ -115,7 +115,7 @@ export default function BranchesPage() {
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                                     <label className="form-label">Email</label>
-                                    <input className="form-input" type="email" placeholder="branch@company.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                                    <input className="form-input" type="email" placeholder="info@company.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                                 </div>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                                     <label className="form-label">Address</label>
@@ -124,7 +124,7 @@ export default function BranchesPage() {
                             </div>
                             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 10 }}>
                                 <button type="button" className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : editing ? '✓ Update' : '✓ Create Branch'}</button>
+                                <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : editing ? '✓ Update' : '✓ Create Company'}</button>
                             </div>
                         </form>
                     </div>

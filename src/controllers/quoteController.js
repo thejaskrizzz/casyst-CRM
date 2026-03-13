@@ -19,7 +19,11 @@ exports.getQuotes = async (req, res, next) => {
         const total = await Quote.countDocuments(filter);
         const quotes = await Quote.find(filter)
             .populate('lead', 'name phone')
-            .populate('created_by', 'name')
+            .populate({
+                path: 'created_by',
+                select: 'name branch',
+                populate: { path: 'branch', select: 'name code address phone email tagline website logo_url gst_number pan_number invoice_prefix quote_prefix' }
+            })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(Number(limit));
@@ -33,7 +37,11 @@ exports.getQuote = async (req, res, next) => {
     try {
         const quote = await Quote.findById(req.params.id)
             .populate('lead', 'name phone email')
-            .populate('created_by', 'name')
+            .populate({
+                path: 'created_by',
+                select: 'name branch',
+                populate: { path: 'branch', select: 'name code address phone email tagline website logo_url gst_number pan_number invoice_prefix quote_prefix' }
+            })
             .populate('status_history.changed_by', 'name');
         if (!quote) return res.status(404).json({ success: false, message: 'Quote not found' });
         if (req.user.role === 'sales' && quote.created_by._id.toString() !== req.user._id.toString())

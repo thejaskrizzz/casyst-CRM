@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import {
     TrendingUp, Users, Receipt, Briefcase, DollarSign,
-    CheckCircle, Target, Phone, BarChart2, RefreshCw
+    CheckCircle, Target, Phone, BarChart2, RefreshCw, Building2, ChevronDown
 } from 'lucide-react';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -48,16 +48,24 @@ export default function AdminAnalytics() {
     const [loading, setLoading] = useState(true);
     const [from, setFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth() - 5); d.setDate(1); return d.toISOString().slice(0, 10); });
     const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+    
+    // Branch Filter State
+    const [branches, setBranches] = useState([]);
+    const [selectedBranch, setSelectedBranch] = useState('all');
+
+    useEffect(() => {
+        api.get('/branches').then(res => setBranches(res.data.data)).catch(console.error);
+    }, []);
 
     const fetch = async () => {
         setLoading(true);
         try {
-            const r = await api.get(`/analytics/overview?from=${from}&to=${to}`);
+            const r = await api.get(`/analytics/overview?from=${from}&to=${to}&branch=${selectedBranch}`);
             setData(r.data.data);
         } catch { } finally { setLoading(false); }
     };
 
-    useEffect(() => { fetch(); }, []);
+    useEffect(() => { fetch(); }, [selectedBranch]);
 
     if (loading) return <div className="page-body"><div style={{ textAlign: 'center', padding: 80, color: 'var(--ink-3)' }}><RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} /><p style={{ marginTop: 12 }}>Loading analytics…</p></div></div>;
     if (!data) return null;
@@ -75,9 +83,31 @@ export default function AdminAnalytics() {
                     <p style={{ color: 'var(--ink-3)', fontSize: 13, marginTop: 4 }}>Business-wide performance overview</p>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="form-input" style={{ width: 150 }} />
+                    <div style={{ position: 'relative' }}>
+                        <Building2 size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                        <select 
+                            value={selectedBranch}
+                            onChange={(e) => setSelectedBranch(e.target.value)}
+                            style={{ 
+                                appearance: 'none', padding: '8px 36px 8px 36px', 
+                                border: '1px solid var(--border)', borderRadius: 8, 
+                                background: 'white', color: 'var(--ink)', fontSize: 13, 
+                                fontWeight: 500, cursor: 'pointer', minWidth: 160
+                            }}
+                        >
+                            <option value="all">All Companies</option>
+                            {branches.map(b => (
+                                <option key={b._id} value={b._id}>{b.name}</option>
+                            ))}
+                        </select>
+                        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
+                    </div>
+
+                    <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+
+                    <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="form-input" style={{ width: 140 }} />
                     <span style={{ color: 'var(--ink-3)' }}>→</span>
-                    <input type="date" value={to} onChange={e => setTo(e.target.value)} className="form-input" style={{ width: 150 }} />
+                    <input type="date" value={to} onChange={e => setTo(e.target.value)} className="form-input" style={{ width: 140 }} />
                     <button className="btn btn-primary" onClick={fetch}><RefreshCw size={14} /> Apply</button>
                 </div>
             </div>

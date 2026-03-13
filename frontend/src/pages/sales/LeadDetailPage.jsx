@@ -276,7 +276,7 @@ export default function LeadDetailPage() {
                                 { icon: Building2, label: 'Source', value: lead.source, cap: true },
                                 { icon: Calendar, label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) },
                                 { icon: Building2, label: 'Interested Package', value: lead.interested_package?.name || '—' },
-                                { icon: Building2, label: user.role === 'admin' ? 'Assigned To (Branch)' : 'Assigned To', isAssign: true },
+                                { icon: Building2, label: user.role === 'admin' ? 'Assigned To (Company)' : 'Assigned To', isAssign: true },
                             ].map(({ icon: Icon, label, value, cap, isAssign }) => (
                                 <div key={label}>
                                     <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 5 }}>{label}</div>

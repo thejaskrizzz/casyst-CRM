@@ -20,7 +20,9 @@ const monthRange = (offset = 0) => {
 ══════════════════════════════════════════════════════ */
 exports.getOverview = async (req, res, next) => {
     try {
-        const { from, to } = req.query;
+        const { from, to, branch } = req.query;
+        const bf = branch && branch !== 'all' ? { branch } : {};
+
         const now = new Date();
         const rangeStart = from ? new Date(from) : new Date(now.getFullYear(), now.getMonth() - 5, 1);
         const rangeEnd = to ? new Date(to) : now;
@@ -36,40 +38,41 @@ exports.getOverview = async (req, res, next) => {
             leadStatusBreakdown, leadSourceBreakdown, quoteStatusBreakdown,
             leadTrend, revenueTrend, conversionTrend, topPackages,
         ] = await Promise.all([
-            Lead.countDocuments({ is_archived: false }),
-            Lead.countDocuments({ is_archived: false, createdAt: { $gte: thisMonth } }),
-            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: thisMonth } }),
-            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: lastMonth, $lte: lastMonthEnd } }),
+            Lead.countDocuments({ is_archived: false, ...bf }),
+            Lead.countDocuments({ is_archived: false, createdAt: { $gte: thisMonth }, ...bf }),
+            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: thisMonth }, ...bf }),
+            Lead.countDocuments({ status: 'converted', updatedAt: { $gte: lastMonth, $lte: lastMonthEnd }, ...bf }),
             Quote.countDocuments({ is_archived: false }),
             Quote.countDocuments({ is_archived: false, createdAt: { $gte: thisMonth } }),
             Quote.countDocuments({ status: 'accepted' }),
-            ServiceOrder.countDocuments({ is_archived: false }),
-            ServiceOrder.countDocuments({ is_archived: false, createdAt: { $gte: thisMonth } }),
-            ServiceOrder.aggregate([{ $group: { _id: null, total: { $sum: '$project_value' }, paid: { $sum: '$amount_paid' }, balance: { $sum: '$balance_due' } } }]),
-            ServiceOrder.aggregate([{ $match: { createdAt: { $gte: lastMonth, $lte: lastMonthEnd } } }, { $group: { _id: null, total: { $sum: '$project_value' } } }]),
-            Lead.aggregate([{ $match: { is_archived: false } }, { $group: { _id: '$status', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
-            Lead.aggregate([{ $match: { is_archived: false } }, { $group: { _id: '$source', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 8 }]),
+            ServiceOrder.countDocuments({ is_archived: false, ...bf }),
+            ServiceOrder.countDocuments({ is_archived: false, createdAt: { $gte: thisMonth }, ...bf }),
+            ServiceOrder.aggregate([{ $match: { ...bf } }, { $group: { _id: null, total: { $sum: '$project_value' }, paid: { $sum: '$amount_paid' }, balance: { $sum: '$balance_due' } } }]),
+            ServiceOrder.aggregate([{ $match: { createdAt: { $gte: lastMonth, $lte: lastMonthEnd }, ...bf } }, { $group: { _id: null, total: { $sum: '$project_value' } } }]),
+            Lead.aggregate([{ $match: { is_archived: false, ...bf } }, { $group: { _id: '$status', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+            Lead.aggregate([{ $match: { is_archived: false, ...bf } }, { $group: { _id: '$source', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 8 }]),
             Quote.aggregate([{ $match: { is_archived: false } }, { $group: { _id: '$status', count: { $sum: 1 }, value: { $sum: '$total' } } }]),
             // Lead trend
             Lead.aggregate([
-                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd } } },
+                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd }, ...bf } },
                 { $group: { _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } }, created: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'converted'] }, 1, 0] } } } },
                 { $sort: { '_id.y': 1, '_id.m': 1 } }
             ]),
             // Revenue trend (service orders value per month)
             ServiceOrder.aggregate([
-                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd } } },
+                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd }, ...bf } },
                 { $group: { _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } }, value: { $sum: '$project_value' }, paid: { $sum: '$amount_paid' } } },
                 { $sort: { '_id.y': 1, '_id.m': 1 } }
             ]),
             // Conversion rate trend
             Lead.aggregate([
-                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd } } },
+                { $match: { createdAt: { $gte: rangeStart, $lte: rangeEnd }, ...bf } },
                 { $group: { _id: { y: { $year: '$createdAt' }, m: { $month: '$createdAt' } }, total: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'converted'] }, 1, 0] } } } },
                 { $sort: { '_id.y': 1, '_id.m': 1 } }
             ]),
             // Top packages by order count
             ServiceOrder.aggregate([
+                { $match: { ...bf } },
                 { $group: { _id: '$package', count: { $sum: 1 }, revenue: { $sum: '$project_value' } } },
                 { $sort: { count: -1 } }, { $limit: 6 },
                 { $lookup: { from: 'packages', localField: '_id', foreignField: '_id', as: 'pkg' } },

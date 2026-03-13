@@ -12,7 +12,7 @@ const navConfig = {
         { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Leads', to: '/admin/leads', icon: TrendingUp },
         { label: 'Users', to: '/admin/users', icon: Users },
-        { label: 'Branches', to: '/admin/branches', icon: Building2 },
+        { label: 'Companies', to: '/admin/branches', icon: Building2 },
         { label: 'Packages', to: '/admin/packages', icon: Package },
         { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
         { label: 'Staff Performance', to: '/admin/staff-performance', icon: Award },
@@ -30,6 +30,7 @@ const navConfig = {
         { label: 'Packages', to: '/manager/packages', icon: Package },
         { label: 'My Tasks', to: '/manager/my-tasks', icon: ClipboardList },
         { label: 'Track Order', to: '/manager/track-order', icon: Search },
+        { label: 'Company Settings', to: '/manager/settings', icon: Settings },
     ],
     sales: [
         { label: 'Dashboard', to: '/sales/dashboard', icon: LayoutDashboard },

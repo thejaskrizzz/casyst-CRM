@@ -75,7 +75,7 @@ export default function UsersPage() {
                 <table>
                     <thead>
                         <tr>
-                            <th>User</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th>Joined</th><th></th>
+                            <th>User</th><th>Email</th><th>Role</th><th>Company</th><th>Status</th><th>Joined</th><th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -137,14 +137,14 @@ export default function UsersPage() {
                                 </div>
                             </div>
 
-                            {/* Branch selector — required for manager/sales/operations */}
+                            {/* Company selector — required for manager/sales/operations */}
                             {needsBranch && (
                                 <div className="form-group">
-                                    <label className="form-label">Branch {needsBranch ? '*' : ''}</label>
+                                    <label className="form-label">Company {needsBranch ? '*' : ''}</label>
                                     <select className="form-select" value={form.branch} onChange={e => setForm({ ...form, branch: e.target.value })} required={needsBranch}>
-                                        <option value="">— Select Branch —</option>
+                                        <option value="">— Select Company —</option>
                                         {branches.map(b => (
-                                            <option key={b._id} value={b._id}>{b.name} ({b.code})</option>
+                                            <option key={b._id} value={b._id}>{b.name}</option>
                                         ))}
                                     </select>
                                     {branches.length === 0 && (

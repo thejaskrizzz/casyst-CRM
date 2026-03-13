@@ -496,7 +496,7 @@ export default function LeadsListPage() {
                             </div>
                             {canAssign && (
                                 <div className="form-group">
-                                    <label className="form-label">{user.role === 'admin' ? 'Assign To (Branch)' : 'Assign To (Sales Staff)'}</label>
+                                    <label className="form-label">{user.role === 'admin' ? 'Assign To (Company)' : 'Assign To (Sales Staff)'}</label>
                                     <select className="form-select" value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })}>
                                         <option value="">— Unassigned —</option>
                                         {assignOptions.map(opt => <option key={opt._id} value={opt._id}>{opt.name}</option>)}

@@ -17,9 +17,9 @@ const companySettingsSchema = new mongoose.Schema({
     phone: { type: String, default: '' },
     website: { type: String, default: '' },
     currency: { type: String, default: 'INR' },
-    invoice_prefix: { type: String, default: 'INV' },
-    quote_prefix: { type: String, default: 'QT' },
-    default_tax_pct: { type: Number, default: 18 },
+    invoice_prefix: { type: String, default: 'INV', uppercase: true, trim: true },
+    quote_prefix: { type: String, default: 'QT', uppercase: true, trim: true },
+    default_tax_pct: { type: Number, default: 18, min: 0, max: 100 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('CompanySettings', companySettingsSchema);

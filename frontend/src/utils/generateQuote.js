@@ -1,18 +1,18 @@
 /**
- * generateInvoice(payment, order, settings)
- * Opens a print-ready HTML invoice in a new window.
+ * generateQuote(quote, settings)
+ * Opens a print-ready HTML quote in a new window.
  * The user can save it as PDF using the browser's "Save as PDF" print option.
  */
 
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
-export function generateInvoice(payment, order, settings) {
+export function generateQuote(quote, settings) {
     const s = settings || {};
-    const b = order?.branch || {}; // Branch details taking priority
+    const b = quote?.created_by?.branch || {}; // Branch details taking priority
 
-    const prefix = b.invoice_prefix || s.invoice_prefix || 'INV';
-    const invoiceNo = `${prefix}-${payment._id?.toString().slice(-6).toUpperCase()}`;
+    const prefix = b.quote_prefix || s.quote_prefix || 'QT';
+    const quoteNo = quote.reference_no || `${prefix}-${quote._id?.toString().slice(-6).toUpperCase()}`;
     
     // Choose branch logo if it exists, otherwise fallback to global
     const logoSrcUrl = b.logo_url || s.logo_url;
@@ -33,13 +33,11 @@ export function generateInvoice(payment, order, settings) {
     const gstNumber = b.gst_number || s.gst_number || '';
     const panNumber = b.pan_number || s.pan_number || '';
 
-    const methodLabels = { cash: 'Cash', bank_transfer: 'Bank Transfer', upi: 'UPI', cheque: 'Cheque', other: 'Other' };
-
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Invoice ${invoiceNo}</title>
+<title>Quotation ${quoteNo}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,13 +52,14 @@ export function generateInvoice(payment, order, settings) {
   .logo-placeholder { width: 54px; height: 54px; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 800; }
   .company-name { font-size: 20px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; }
   .company-sub { font-size: 11px; color: #888; margin-top: 2px; }
-  .invoice-badge { text-align: right; }
-  .invoice-title { font-size: 32px; font-weight: 800; color: #6366f1; letter-spacing: -1px; text-transform: uppercase; }
-  .invoice-no { font-size: 13px; color: #888; margin-top: 4px; }
-  .invoice-date { font-size: 12px; color: #555; margin-top: 2px; }
+  .quote-badge { text-align: right; }
+  .quote-title { font-size: 32px; font-weight: 800; color: #6366f1; letter-spacing: -1px; text-transform: uppercase; }
+  .quote-no { font-size: 13px; color: #888; margin-top: 4px; }
+  .quote-date { font-size: 12px; color: #555; margin-top: 2px; }
 
   /* Status pill */
-  .status-approved { display: inline-block; background: #d1fae5; color: #065f46; padding: 4px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .status-accepted { display: inline-block; background: #d1fae5; color: #065f46; padding: 4px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .status-sent { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 4px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
 
   /* Info Grid */
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 36px; }
@@ -104,7 +103,7 @@ export function generateInvoice(payment, order, settings) {
 </head>
 <body>
 <div class="page">
-  <div class="watermark">PAID</div>
+  <div class="watermark">QUOTATION</div>
 
   <!-- HEADER -->
   <div class="header">
@@ -117,11 +116,12 @@ export function generateInvoice(payment, order, settings) {
         <div class="company-sub">${tagline || website}</div>
       </div>
     </div>
-    <div class="invoice-badge">
-      <div class="invoice-title">Invoice</div>
-      <div class="invoice-no"># ${invoiceNo}</div>
-      <div class="invoice-date">Date: ${fmtDate(payment.approved_at || payment.paid_at)}</div>
-      <div style="margin-top:8px"><span class="status-approved">✓ PAYMENT APPROVED</span></div>
+    <div class="quote-badge">
+      <div class="quote-title">Quotation</div>
+      <div class="quote-no"># ${quoteNo}</div>
+      <div class="quote-date">Date: ${fmtDate(quote.createdAt)}</div>
+      ${quote.valid_until ? `<div class="quote-date">Valid Until: ${fmtDate(quote.valid_until)}</div>` : ''}
+      ${quote.status === 'accepted' ? `<div style="margin-top:8px"><span class="status-accepted">✓ ACCEPTED</span></div>` : ''}
     </div>
   </div>
 
@@ -139,40 +139,46 @@ export function generateInvoice(payment, order, settings) {
       </div>
     </div>
     <div class="info-block">
-      <div class="info-label">Billed To</div>
+      <div class="info-label">Quotation For</div>
       <div class="info-value">
-        <strong>${order.client?.company_name || order.client?.contact_person || '—'}</strong>
-        ${order.client?.contact_person && order.client?.company_name ? `<div class="muted">${order.client.contact_person}</div>` : ''}
-        ${order.client?.phone ? `<div class="muted">📞 ${order.client.phone}</div>` : ''}
-        ${order.client?.email ? `<div class="muted">✉ ${order.client.email}</div>` : ''}
+        <strong>${quote.contact_name || '—'}</strong>
+        ${quote.company_name ? `<div class="muted">${quote.company_name}</div>` : ''}
+        ${quote.contact_phone ? `<div class="muted">📞 ${quote.contact_phone}</div>` : ''}
+        ${quote.contact_email ? `<div class="muted">✉ ${quote.contact_email}</div>` : ''}
       </div>
     </div>
   </div>
 
-  <!-- SERVICE TABLE -->
+  ${quote.notes ? `
+    <div style="margin-bottom: 24px; background: #f8f8ff; padding: 16px; border-radius: 8px; border-left: 4px solid #6366f1;">
+      <strong style="color: #6366f1; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Notes</strong><br/>
+      <span style="font-size: 12px; color: #555;">${quote.notes}</span>
+    </div>
+  ` : ''}
+
+
+  <!-- ITEM TABLE -->
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Description</th>
-          <th>Payment Method</th>
-          <th>Reference No.</th>
+          <th style="text-align:right">Qty</th>
+          <th style="text-align:right">Unit Price</th>
           <th style="text-align:right">Amount</th>
         </tr>
       </thead>
       <tbody>
+        ${(quote.items || []).map((item, i) => `
         <tr>
-          <td>1</td>
-          <td>
-            <strong>${order.package?.name || 'Professional Service'}</strong>
-            ${payment.note ? `<br/><span style="color:#888;font-size:11px">${payment.note}</span>` : ''}
-            <br/><span style="color:#888;font-size:11px">Payment Date: ${fmtDate(payment.paid_at)}</span>
-          </td>
-          <td>${methodLabels[payment.method] || payment.method || '—'}</td>
-          <td style="font-family:monospace;font-size:12px">${payment.reference_no || '—'}</td>
-          <td style="text-align:right;font-weight:700;color:#1a1a2e">${fmt(payment.amount)}</td>
+          <td>${i + 1}</td>
+          <td><strong>${item.description}</strong></td>
+          <td style="text-align:right">${item.quantity}</td>
+          <td style="text-align:right">${fmt(item.unit_price)}</td>
+          <td style="text-align:right;font-weight:700;color:#1a1a2e">${fmt(item.quantity * item.unit_price)}</td>
         </tr>
+        `).join('')}
       </tbody>
     </table>
   </div>
@@ -182,31 +188,29 @@ export function generateInvoice(payment, order, settings) {
     <div class="totals-box">
       <div class="totals-row">
         <span>Subtotal</span>
-        <span>${fmt(payment.amount)}</span>
+        <span>${fmt(quote.subtotal)}</span>
+      </div>
+      ${quote.discount_pct > 0 ? `
+      <div class="totals-row">
+        <span>Discount (${quote.discount_pct}%)</span>
+        <span style="color: #ef4444;">− ${fmt(quote.subtotal * (quote.discount_pct / 100))}</span>
+      </div>
+      ` : ''}
+      <div class="totals-row">
+        <span>Tax / GST (${quote.tax_pct}%)</span>
+        <span>${fmt((quote.subtotal - (quote.subtotal * ((quote.discount_pct || 0) / 100))) * ((quote.tax_pct || 0) / 100))}</span>
       </div>
       <div class="totals-row">
-        <span>Tax / GST</span>
-        <span>Included</span>
-      </div>
-      <div class="totals-row">
-        <span>Total Paid</span>
-        <span>${fmt(payment.amount)}</span>
+        <span>Total Estimated</span>
+        <span>${fmt(quote.total)}</span>
       </div>
     </div>
-  </div>
-
-  <!-- APPROVAL INFO -->
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:32px;font-size:12px;color:#065f46">
-    <strong>✓ Verified & Approved</strong>
-    ${payment.approved_by?.name ? ` by <strong>${payment.approved_by.name}</strong>` : ''}
-    ${payment.approved_at ? ` on ${fmtDate(payment.approved_at)}` : ''}
-    <br/><span style="opacity:0.75">This payment has been reviewed and approved by the accounts department.</span>
   </div>
 
   <!-- FOOTER -->
   <div class="footer">
     <div class="footer-note">
-      Thank you for your business. This is a computer-generated invoice and does not require a signature.
+      This quotation is valid until ${quote.valid_until ? fmtDate(quote.valid_until) : 'further notice'}.
       ${website ? `<br/>Visit us at <strong>${website}</strong>` : ''}
     </div>
     <div class="footer-company">
@@ -239,6 +243,6 @@ export function generateInvoice(payment, order, settings) {
         win.document.write(html);
         win.document.close();
     } else {
-        alert('Pop-up blocked. Please allow pop-ups for this site to download invoices.');
+        alert('Pop-up blocked. Please allow pop-ups for this site to download quotations.');
     }
 }

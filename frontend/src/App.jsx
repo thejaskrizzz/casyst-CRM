@@ -20,6 +20,7 @@ import BranchesPage from './pages/admin/BranchesPage';
 
 // Manager
 import ManagerDashboard from './pages/manager/ManagerDashboard';
+import ManagerSettings from './pages/manager/ManagerSettings';
 
 // Sales
 import SalesDashboard from './pages/sales/SalesDashboard';
@@ -65,6 +66,7 @@ export default function App() {
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/track-order" element={<TrackOrderPage />} />
           <Route path="/" element={<RoleRedirect />} />
 
           {/* Admin — can also view & assign leads */}
@@ -96,6 +98,7 @@ export default function App() {
             <Route path="packages" element={<PackagesPage />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
             <Route path="track-order" element={<TrackOrderPage />} />
+            <Route path="settings" element={<ManagerSettings />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
 

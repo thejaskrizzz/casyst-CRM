@@ -266,7 +266,7 @@ export default function AdminDashboard() {
                             onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
                             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                         >
-                            <option value="all">🌍 Global (All Branches)</option>
+                            <option value="all">🌍 Global (All Companies)</option>
                             {branches.map(b => (
                                 <option key={b._id} value={b._id}>{b.name}</option>
                             ))}
