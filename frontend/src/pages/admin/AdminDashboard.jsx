@@ -280,19 +280,33 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
+            {/* ── Financial Row ── */}
+            <div className="grid-4 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+                <div className="card" style={{ background: 'linear-gradient(135deg, #10b98115, #05966905)', border: '1px solid #10b98130' }}>
+                    <StatCard label="Total Collection" value={fmt(data?.total_collection || 0)} icon={DollarSign} color="#10b981" sub="Total approved payments" />
+                </div>
+                <div className="card" style={{ background: 'linear-gradient(135deg, #ef444415, #dc262605)', border: '1px solid #ef444430' }}>
+                    <StatCard label="Total Expenses" value={fmt(data?.total_expenses || 0)} icon={TrendingUp} color="#ef4444" sub="Approved expenses" />
+                </div>
+                <div className="card" style={{ background: 'linear-gradient(135deg, #f57c0015, #e6510005)', border: '1px solid #f57c0030' }}>
+                    <StatCard label="Vendor Charges" value={fmt(data?.total_vendor_charges || 0)} icon={Briefcase} color="#f57c00" sub="Approved vendor payouts" />
+                </div>
+                <div className="card" style={{ background: 'linear-gradient(135deg, #6366f115, #4f46e505)', border: '1px solid #6366f130' }}>
+                    <StatCard label="Net Profit" value={fmt(data?.net_revenue || 0)} icon={TrendingUp} color="#6366f1" sub="Collection - Expenses" />
+                </div>
+            </div>
+
             {/* ── KPI Row ── */}
-            <div className="grid-4 mb-6">
+            <div className="grid-4 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
                 <StatCard label="Total Users" value={data?.total_users || 0} icon={Users} color="#1a1a1a" onClick={() => navigate('/admin/users')} />
                 <StatCard label="Total Leads" value={data?.total_leads || 0} icon={TrendingUp} color="#1976d2" onClick={() => navigate('/admin/leads')} />
                 <StatCard label="Active Clients" value={data?.total_clients || 0} icon={Briefcase} color="#7b1fa2" />
-                <StatCard label="Total Revenue" value={fmt(data?.total_revenue || 0)} icon={DollarSign} color="#2e7d32" />
-            </div>
-            <div className="grid-4 mb-6">
                 <StatCard label="Service Orders" value={data?.total_service_orders || 0} icon={Activity} color="#f57c00" onClick={() => navigate('/admin/service-orders')} />
+            </div>
+            <div className="grid-3 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
                 <StatCard label="Completed Orders" value={data?.completed_orders || 0} icon={CheckCircle} color="#2e7d32" />
                 <StatCard label="Active Packages" value={data?.total_packages || 0} icon={Package} color="#0097a7" onClick={() => navigate('/admin/packages')} />
-                <StatCard label="Conversion Rate" value={`${conversionRate}%`} icon={TrendingUp} color="#7b1fa2"
-                    sub={`${completionRate}% order completion`} />
+                <StatCard label="Conversion Rate" value={`${conversionRate}%`} icon={TrendingUp} color="#7b1fa2" sub={`${completionRate}% order completion`} />
             </div>
 
             {/* ── Row 1: Lead Trend + Revenue Chart ── */}

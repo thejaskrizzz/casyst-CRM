@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Lead = require('../models/Lead');
 const ServiceOrder = require('../models/ServiceOrder');
 const Client = require('../models/Client');
@@ -252,7 +253,7 @@ exports.managerDashboard = async (req, res, next) => {
 exports.adminDashboard = async (req, res, next) => {
     try {
         const branchId = req.query.branch;
-        const bf = branchId && branchId !== 'all' ? { branch: branchId } : {};
+        const bf = branchId && branchId !== 'all' ? { branch: new mongoose.Types.ObjectId(branchId) } : {};
 
         // Date Filter
         const dateFilter = {};
@@ -276,12 +277,51 @@ exports.adminDashboard = async (req, res, next) => {
             ServiceOrder.countDocuments({ status: 'completed', ...bf, ...dateFilter }),
         ]);
 
-        // Total revenue from completed orders
-        const totalRevenueAgg = await ServiceOrder.aggregate([
-            { $match: { status: 'completed', ...bf, ...dateFilter } },
-            { $lookup: { from: 'packages', localField: 'package', foreignField: '_id', as: 'pkg' } },
-            { $unwind: '$pkg' },
-            { $group: { _id: null, total: { $sum: '$pkg.price' } } }
+        // Total Collection (Approved Payments) & Total Expenses (Approved Expenses)
+        const financialsAgg = await ServiceOrder.aggregate([
+            { $match: { is_archived: false, ...bf, ...dateFilter } },
+            {
+                $group: {
+                    _id: null,
+                    total_collection: {
+                        $sum: {
+                            $reduce: {
+                                input: '$payments',
+                                initialValue: 0,
+                                in: {
+                                    $cond: [{ $eq: ['$$this.status', 'approved'] }, { $add: ['$$value', '$$this.amount'] }, '$$value']
+                                }
+                            }
+                        }
+                    },
+                    total_expenses: {
+                        $sum: {
+                            $reduce: {
+                                input: '$expenses',
+                                initialValue: 0,
+                                in: {
+                                    $cond: [{ $eq: ['$$this.status', 'approved'] }, { $add: ['$$value', '$$this.amount'] }, '$$value']
+                                }
+                            }
+                        }
+                    },
+                    total_vendor_charges: {
+                        $sum: {
+                            $reduce: {
+                                input: '$expenses',
+                                initialValue: 0,
+                                in: {
+                                    $cond: [
+                                        { $and: [{ $eq: ['$$this.status', 'approved'] }, { $eq: ['$$this.category', 'vendor'] }] },
+                                        { $add: ['$$value', '$$this.amount'] },
+                                        '$$value'
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         ]);
 
         // Users by role (donut)
@@ -388,7 +428,10 @@ exports.adminDashboard = async (req, res, next) => {
                 total_users: totalUsers, total_leads: totalLeads,
                 total_clients: totalClients, total_service_orders: totalOrders,
                 total_packages: totalPackages, completed_orders: completedOrders,
-                total_revenue: totalRevenueAgg[0]?.total || 0,
+                total_collection: financialsAgg[0]?.total_collection || 0,
+                total_expenses: financialsAgg[0]?.total_expenses || 0,
+                total_vendor_charges: financialsAgg[0]?.total_vendor_charges || 0,
+                net_revenue: (financialsAgg[0]?.total_collection || 0) - (financialsAgg[0]?.total_expenses || 0),
                 users_by_role: usersByRole,
                 leads_by_status: leadsByStatus,
                 orders_by_status: ordersByStatus,

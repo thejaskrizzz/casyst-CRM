@@ -361,7 +361,12 @@ exports.addExpense = async (req, res, next) => {
         const approvedTotal = order.payments
             .filter(p => p.status === 'approved')
             .reduce((s, p) => s + (p.amount || 0), 0);
-        const currentExpenses = order.expenses.reduce((s, e) => s + (e.amount || 0), 0);
+        
+        // Count all expenses that aren't rejected (pending + approved)
+        const currentExpenses = order.expenses
+            .filter(e => e.status !== 'rejected')
+            .reduce((s, e) => s + (e.amount || 0), 0);
+
         if (currentExpenses + Number(amount) > approvedTotal) {
             return res.status(400).json({
                 success: false,
@@ -399,5 +404,49 @@ exports.deleteExpense = async (req, res, next) => {
 
         await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'expense_deleted', performed_by: req.user._id, description: `Expense of ₹${deleted.amount} deleted` });
         res.json({ success: true, message: 'Expense deleted' });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── APPROVE expense ──────────── */
+exports.approveExpense = async (req, res, next) => {
+    try {
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const expense = order.expenses.id(req.params.eid);
+        if (!expense) return res.status(404).json({ success: false, message: 'Expense not found' });
+        if (expense.status !== 'pending') return res.status(400).json({ success: false, message: `Expense is already ${expense.status}` });
+
+        expense.status = 'approved';
+        expense.approved_by = req.user._id;
+        expense.approved_at = new Date();
+        await order.save();
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'expense_approved', performed_by: req.user._id, description: `Expense of ₹${expense.amount} under "${expense.category}" approved` });
+
+        res.json({ success: true, message: 'Expense approved ✓' });
+    } catch (err) { next(err); }
+};
+
+/* ──────────── REJECT expense ──────────── */
+exports.rejectExpense = async (req, res, next) => {
+    try {
+        const { rejection_reason } = req.body;
+        const order = await ServiceOrder.findById(req.params.id);
+        if (!order) return res.status(404).json({ success: false, message: 'Service order not found' });
+
+        const expense = order.expenses.id(req.params.eid);
+        if (!expense) return res.status(404).json({ success: false, message: 'Expense not found' });
+        if (expense.status !== 'pending') return res.status(400).json({ success: false, message: `Expense is already ${expense.status}` });
+
+        expense.status = 'rejected';
+        expense.approved_by = req.user._id;
+        expense.approved_at = new Date();
+        expense.rejection_reason = rejection_reason || 'No reason provided';
+        await order.save();
+
+        await logActivity({ entity_type: 'service_order', entity_id: order._id, action: 'expense_rejected', performed_by: req.user._id, description: `Expense of ₹${expense.amount} under "${expense.category}" rejected: ${rejection_reason || 'No reason'}` });
+
+        res.json({ success: true, message: 'Expense rejected' });
     } catch (err) { next(err); }
 };

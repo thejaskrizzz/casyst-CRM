@@ -7,6 +7,7 @@ const packageSchema = new mongoose.Schema({
     estimated_days: { type: Number, required: true, min: 1 },
     required_documents: [{ type: String }],
     is_active: { type: Boolean, default: true },
+    branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null }, // Optional for global
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 

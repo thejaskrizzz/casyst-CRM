@@ -4,7 +4,7 @@ const {
     getServiceOrders, getServiceOrder, createServiceOrder, updateServiceOrder,
     updateStatus, assignServiceOrder, getServiceOrderActivity, trackServiceOrder,
     addPayment, deletePayment, approvePayment, rejectPayment,
-    addExpense, deleteExpense,
+    addExpense, deleteExpense, approveExpense, rejectExpense,
 } = require('../controllers/serviceOrderController');
 const { createTask, getTasks, updateTask } = require('../controllers/taskController');
 const { getDocuments, uploadDocument, deleteDocument } = require('../controllers/documentController');
@@ -53,5 +53,7 @@ router.delete('/:id/documents/:docId', authorize('admin', 'manager'), deleteDocu
 // Expenses
 router.post('/:id/expenses', authorize('admin', 'manager', 'operations'), addExpense);
 router.delete('/:id/expenses/:eid', authorize('admin', 'manager'), deleteExpense);
+router.patch('/:id/expenses/:eid/approve', authorize('admin', 'accountant'), approveExpense);
+router.patch('/:id/expenses/:eid/reject', authorize('admin', 'accountant'), rejectExpense);
 
 module.exports = router;

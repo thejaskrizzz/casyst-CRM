@@ -21,10 +21,14 @@ const statusBadge = (status) => {
     );
 };
 
+const EXPENSE_CATEGORY_LABELS = { vendor: 'Vendor', govt_fee: 'Govt Fee', service_charge: 'Service Charge', gst: 'GST', transportation: 'Transportation', miscellaneous: 'Miscellaneous', other: 'Other' };
+const EXPENSE_CATEGORY_COLORS = { vendor: '#6366f1', govt_fee: '#0891b2', service_charge: '#7c3aed', gst: '#d97706', transportation: '#059669', miscellaneous: '#64748b', other: '#94a3b8' };
+
 export default function AccountantDashboard() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [rejectModal, setRejectModal] = useState(null); // { orderId, paymentId, amount }
+    const [rejectExpenseModal, setRejectExpenseModal] = useState(null); // { orderId, expenseId, amount }
     const [rejectReason, setRejectReason] = useState('');
     const [processing, setProcessing] = useState(false);
     const [settings, setSettings] = useState(null);
@@ -51,22 +55,28 @@ export default function AccountantDashboard() {
     const allPayments = orders.flatMap(order =>
         (order.payments || []).map(p => ({ ...p, order }))
     );
-    const pending = allPayments.filter(p => p.status === 'pending');
-    const approvedToday = allPayments.filter(p => p.status === 'approved' && new Date(p.approved_at).toDateString() === new Date().toDateString());
-    const pendingValue = pending.reduce((s, p) => s + p.amount, 0);
+    const pendingPayments = allPayments.filter(p => p.status === 'pending');
+    const pendingValue = pendingPayments.reduce((s, p) => s + p.amount, 0);
 
-    const handleApprove = async (orderId, paymentId) => {
+    // Flatten all expenses with order context
+    const allExpenses = orders.flatMap(order =>
+        (order.expenses || []).map(e => ({ ...e, order }))
+    );
+    const pendingExpenses = allExpenses.filter(e => e.status === 'pending');
+    const pendingExpenseValue = pendingExpenses.reduce((s, e) => s + e.amount, 0);
+
+    const handleApprovePayment = async (orderId, paymentId) => {
         setProcessing(true);
         try {
             await api.patch(`/service-orders/${orderId}/payments/${paymentId}/approve`);
-            toast.success('Payment approved');
+            toast.success('Payment approved ✓');
             loadOrders();
         } catch (e) {
-            toast.error(e.response?.data?.message || 'Failed to approve');
+            toast.error(e.response?.data?.message || 'Failed to approve payment');
         } finally { setProcessing(false); }
     };
 
-    const handleReject = async () => {
+    const handleRejectPayment = async () => {
         if (!rejectReason.trim()) { toast.error('Please enter a rejection reason'); return; }
         setProcessing(true);
         try {
@@ -76,7 +86,32 @@ export default function AccountantDashboard() {
             setRejectReason('');
             loadOrders();
         } catch (e) {
-            toast.error(e.response?.data?.message || 'Failed to reject');
+            toast.error(e.response?.data?.message || 'Failed to reject payment');
+        } finally { setProcessing(false); }
+    };
+
+    const handleApproveExpense = async (orderId, expenseId) => {
+        setProcessing(true);
+        try {
+            await api.patch(`/service-orders/${orderId}/expenses/${expenseId}/approve`);
+            toast.success('Expense approved ✓');
+            loadOrders();
+        } catch (e) {
+            toast.error(e.response?.data?.message || 'Failed to approve expense');
+        } finally { setProcessing(false); }
+    };
+
+    const handleRejectExpense = async () => {
+        if (!rejectReason.trim()) { toast.error('Please enter a rejection reason'); return; }
+        setProcessing(true);
+        try {
+            await api.patch(`/service-orders/${rejectExpenseModal.orderId}/expenses/${rejectExpenseModal.expenseId}/reject`, { rejection_reason: rejectReason });
+            toast.success('Expense rejected');
+            setRejectExpenseModal(null);
+            setRejectReason('');
+            loadOrders();
+        } catch (e) {
+            toast.error(e.response?.data?.message || 'Failed to reject expense');
         } finally { setProcessing(false); }
     };
 
@@ -89,10 +124,10 @@ export default function AccountantDashboard() {
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {[
-                    { label: 'Pending Approvals', value: pending.length, icon: Clock, color: '#f59e0b' },
+                    { label: 'Pending Payments', value: pendingPayments.length, icon: Clock, color: '#f59e0b' },
                     { label: 'Pending Value', value: fmt(pendingValue), icon: DollarSign, color: '#6366f1' },
-                    { label: 'Approved Today', value: approvedToday.length, icon: CheckCircle, color: '#10b981' },
-                    { label: 'Total Payments', value: allPayments.length, icon: TrendingUp, color: '#3b82f6' },
+                    { label: 'Pending Expenses', value: pendingExpenses.length, icon: Clock, color: '#d97706' },
+                    { label: 'Expenses Value', value: fmt(pendingExpenseValue), icon: DollarSign, color: '#c62828' },
                 ].map(({ label, value, icon: Icon, color }) => (
                     <div key={label} className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -110,12 +145,12 @@ export default function AccountantDashboard() {
             <div className="card" style={{ padding: 0 }}>
                 <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <AlertTriangle size={18} color="#f59e0b" />
-                    <h2 style={{ fontSize: 16, fontWeight: 600 }}>Pending Payments Queue ({pending.length})</h2>
+                    <h2 style={{ fontSize: 16, fontWeight: 600 }}>Pending Payments Queue ({pendingPayments.length})</h2>
                 </div>
-                {pending.length === 0 ? (
+                {pendingPayments.length === 0 ? (
                     <div style={{ padding: 48, textAlign: 'center', color: 'var(--ink-3)' }}>
                         <CheckCircle size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
-                        <p>All payments have been reviewed. Nothing pending!</p>
+                        <p>All payments reviewed. Nothing pending!</p>
                     </div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -123,36 +158,77 @@ export default function AccountantDashboard() {
                             <thead>
                                 <tr style={{ background: 'var(--bg)' }}>
                                     {['Order / Client', 'Amount', 'Method', 'Ref No.', 'Added By', 'Date', 'Actions'].map(h => (
-                                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{h}</th>
+                                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {pending.map((p) => (
+                                {pendingPayments.map((p) => (
                                     <tr key={p._id} style={{ borderTop: '1px solid var(--border)' }}>
                                         <td style={{ padding: '12px 16px' }}>
                                             <div style={{ fontWeight: 600, fontSize: 13 }}>{p.order.client?.company_name || '—'}</div>
-                                            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.order.package?.name || '—'}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.order.order_id || '—'}</div>
                                         </td>
                                         <td style={{ padding: '12px 16px', fontWeight: 700, color: '#6366f1' }}>{fmt(p.amount)}</td>
                                         <td style={{ padding: '12px 16px', textTransform: 'capitalize', fontSize: 13 }}>{p.method?.replace('_', ' ')}</td>
                                         <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-3)' }}>{p.reference_no || '—'}</td>
                                         <td style={{ padding: '12px 16px', fontSize: 13 }}>{p.recorded_by?.name || '—'}</td>
-                                        <td style={{ padding: '12px 16px', fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(p.paid_at)}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13 }}>{fmtDate(p.paid_at)}</td>
                                         <td style={{ padding: '12px 16px' }}>
                                             <div style={{ display: 'flex', gap: 8 }}>
-                                                <button
-                                                    className="btn btn-primary"
-                                                    style={{ fontSize: 12, padding: '5px 14px', background: '#10b981', borderColor: '#10b981' }}
-                                                    disabled={processing}
-                                                    onClick={() => handleApprove(p.order._id, p._id)}
-                                                >✓ Approve</button>
-                                                <button
-                                                    className="btn"
-                                                    style={{ fontSize: 12, padding: '5px 14px', color: '#ef4444', borderColor: '#ef4444' }}
-                                                    disabled={processing}
-                                                    onClick={() => setRejectModal({ orderId: p.order._id, paymentId: p._id, amount: p.amount })}
-                                                >✕ Reject</button>
+                                                <button className="btn btn-primary" style={{ fontSize: 11, padding: '4px 10px', background: '#10b981', borderColor: '#10b981' }} onClick={() => handleApprovePayment(p.order._id, p._id)} disabled={processing}>Approve</button>
+                                                <button className="btn" style={{ fontSize: 11, padding: '4px 10px', color: '#ef4444', borderColor: '#ef4444' }} onClick={() => setRejectModal({ orderId: p.order._id, paymentId: p._id, amount: p.amount })} disabled={processing}>Reject</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Pending Expenses Queue */}
+            <div className="card" style={{ padding: 0, marginTop: 24 }}>
+                <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <AlertTriangle size={18} color="#d97706" />
+                    <h2 style={{ fontSize: 16, fontWeight: 600 }}>Pending Expenses Queue ({pendingExpenses.length})</h2>
+                </div>
+                {pendingExpenses.length === 0 ? (
+                    <div style={{ padding: 32, textAlign: 'center', color: 'var(--ink-3)' }}>
+                        <CheckCircle size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
+                        <p>All expenses are processed.</p>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: 'var(--bg)' }}>
+                                    {['Order / Client', 'Category', 'Amount', 'Description', 'By', 'Date', 'Actions'].map(h => (
+                                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pendingExpenses.map((e) => (
+                                    <tr key={e._id} style={{ borderTop: '1px solid var(--border)' }}>
+                                        <td style={{ padding: '12px 16px' }}>
+                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{e.order.client?.company_name || '—'}</div>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{e.order.order_id || '—'}</div>
+                                        </td>
+                                        <td style={{ padding: '12px 16px' }}>
+                                            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: `${EXPENSE_CATEGORY_COLORS[e.category]}20`, color: EXPENSE_CATEGORY_COLORS[e.category] }}>
+                                                {EXPENSE_CATEGORY_LABELS[e.category] || e.category}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '12px 16px', fontWeight: 600, color: '#c62828' }}>{fmt(e.amount)}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--ink-2)' }}>{e.description || '—'}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13 }}>{e.recorded_by?.name || '—'}</td>
+                                        <td style={{ padding: '12px 16px', fontSize: 13 }}>{fmtDate(e.date)}</td>
+                                        <td style={{ padding: '12px 16px' }}>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                                <button className="btn btn-primary" style={{ fontSize: 11, padding: '4px 10px', background: '#10b981', borderColor: '#10b981' }} onClick={() => handleApproveExpense(e.order._id, e._id)} disabled={processing}>Approve</button>
+                                                <button className="btn" style={{ fontSize: 11, padding: '4px 10px', color: '#ef4444', borderColor: '#ef4444' }} onClick={() => setRejectExpenseModal({ orderId: e.order._id, expenseId: e._id, amount: e.amount })} disabled={processing}>Reject</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -191,15 +267,10 @@ export default function AccountantDashboard() {
                                         {p.approved_by?.name || '—'}
                                         {p.rejection_reason && <div style={{ fontSize: 11, color: '#ef4444' }}>"{p.rejection_reason}"</div>}
                                     </td>
-                                    <td style={{ padding: '12px 16px', fontSize: 13, whiteSpace: 'nowrap' }}>{fmtDate(p.paid_at)}</td>
+                                    <td style={{ padding: '12px 16px', fontSize: 13 }}>{fmtDate(p.paid_at)}</td>
                                     <td style={{ padding: '12px 16px' }}>
                                         {p.status === 'approved' && (
-                                            <button
-                                                className="btn btn-ghost btn-sm"
-                                                style={{ fontSize: 11, gap: 4, whiteSpace: 'nowrap' }}
-                                                onClick={() => generateInvoice(p, p.order, settings)}
-                                                title="Download Invoice"
-                                            >
+                                            <button className="btn btn-ghost btn-sm" style={{ fontSize: 11, gap: 4, whiteSpace: 'nowrap' }} onClick={() => generateInvoice(p, p.order, settings)} title="Download Invoice">
                                                 <FileDown size={13} /> Invoice
                                             </button>
                                         )}
@@ -211,7 +282,7 @@ export default function AccountantDashboard() {
                 </div>
             </div>
 
-            {/* Reject Modal */}
+            {/* Reject Payment Modal */}
             {rejectModal && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div className="card" style={{ width: 420, padding: 28 }}>
@@ -220,21 +291,28 @@ export default function AccountantDashboard() {
                             <h3 style={{ fontSize: 16, fontWeight: 700 }}>Reject Payment — {fmt(rejectModal.amount)}</h3>
                         </div>
                         <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Reason for Rejection *</label>
-                        <textarea
-                            rows={3}
-                            style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--ink)', resize: 'none', fontSize: 13 }}
-                            placeholder="e.g. Incorrect amount, missing reference number..."
-                            value={rejectReason}
-                            onChange={e => setRejectReason(e.target.value)}
-                        />
+                        <textarea rows={3} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--ink)', resize: 'none', fontSize: 13 }} placeholder="e.g. Incorrect amount" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
                         <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
                             <button className="btn" onClick={() => { setRejectModal(null); setRejectReason(''); }}>Cancel</button>
-                            <button
-                                className="btn btn-primary"
-                                style={{ background: '#ef4444', borderColor: '#ef4444' }}
-                                onClick={handleReject}
-                                disabled={processing}
-                            >{processing ? 'Rejecting...' : 'Confirm Reject'}</button>
+                            <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={handleRejectPayment} disabled={processing}>Confirm Reject</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reject Expense Modal */}
+            {rejectExpenseModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="card" style={{ width: 420, padding: 28 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                            <XCircle size={22} color="#ef4444" />
+                            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Reject Expense — {fmt(rejectExpenseModal.amount)}</h3>
+                        </div>
+                        <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>Reason for Rejection *</label>
+                        <textarea rows={3} style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--ink)', resize: 'none', fontSize: 13 }} placeholder="e.g. Excess budget" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
+                        <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
+                            <button className="btn" onClick={() => { setRejectExpenseModal(null); setRejectReason(''); }}>Cancel</button>
+                            <button className="btn btn-primary" style={{ background: '#ef4444', borderColor: '#ef4444' }} onClick={handleRejectExpense} disabled={processing}>Confirm Reject</button>
                         </div>
                     </div>
                 </div>

@@ -38,6 +38,7 @@ import ExpensesPage from './pages/operations/ExpensesPage';
 // Accountant
 import AccountantDashboard from './pages/accountant/AccountantDashboard';
 import PaymentsQueue from './pages/accountant/PaymentsQueue';
+import ExpensesQueue from './pages/accountant/ExpensesQueue';
 import ManualInvoicePage from './pages/accountant/ManualInvoicePage';
 
 // Shared
@@ -132,6 +133,7 @@ export default function App() {
           <Route path="/accountant" element={<ProtectedRoute roles={['accountant']}><Layout /></ProtectedRoute>}>
             <Route path="dashboard" element={<AccountantDashboard />} />
             <Route path="payments" element={<PaymentsQueue />} />
+            <Route path="expenses" element={<ExpensesQueue />} />
             <Route path="invoices" element={<ManualInvoicePage />} />
             <Route path="my-tasks" element={<MyTasksPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />

@@ -51,7 +51,8 @@ const navConfig = {
     accountant: [
         { label: 'Dashboard', to: '/accountant/dashboard', icon: LayoutDashboard },
         { label: 'Payments Queue', to: '/accountant/payments', icon: CheckCircle },
-        { label: 'Invoices', to: '/accountant/invoices', icon: Receipt },
+        { label: 'Expenses Queue', to: '/accountant/expenses', icon: Receipt },
+        { label: 'Invoices', to: '/accountant/invoices', icon: FileText },
         { label: 'My Tasks', to: '/accountant/my-tasks', icon: ClipboardList },
     ],
 };

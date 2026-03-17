@@ -31,6 +31,11 @@ const expenseSchema = new mongoose.Schema({
     recorded_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     date: { type: Date, default: Date.now },
     notes: { type: String, default: '' },
+    // Accountant approval workflow
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    approved_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    approved_at: { type: Date, default: null },
+    rejection_reason: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports.EXPENSE_CATEGORIES = EXPENSE_CATEGORIES;

@@ -235,6 +235,7 @@ export default function ServiceOrderDetailPage() {
 
     // Payment verification status (derived from payment approval states)
     const payments = order.payments || [];
+    console.log('ORDER PAYMENTS:', payments.map(p => ({ id: p._id, status: p.status, amount: p.amount })));
     const approvedPayments = payments.filter(p => p.status === 'approved');
     const pendingPayments = payments.filter(p => p.status === 'pending');
     const lastApprover = approvedPayments.length > 0
@@ -451,8 +452,11 @@ export default function ServiceOrderDetailPage() {
                     {canAddExpense && (() => {
                         const expenses = order.expenses || [];
                         const approvedTotal = (order.payments || []).filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
-                        const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
-                        const available = approvedTotal - totalExpenses;
+                        const approvedExpenses = expenses.filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0);
+                        const pendingExpenses = expenses.filter(e => e.status === 'pending');
+                        const totalCommitted = expenses.filter(e => e.status !== 'rejected').reduce((s, e) => s + e.amount, 0);
+                        const available = approvedTotal - totalCommitted;
+
                         return (
                             <div className="card">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -486,31 +490,43 @@ export default function ServiceOrderDetailPage() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 80px 36px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
-                                            {['Category', 'Description', 'Amount', 'By', ''].map(h => (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 90px 85px 75px 36px', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                                            {['Category', 'Description', 'Amount', 'Status', 'By', ''].map(h => (
                                                 <div key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>
                                             ))}
                                         </div>
-                                        {expenses.map((e, i) => (
-                                            <div key={e._id} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 110px 80px 36px', gap: 8, padding: '10px 0', borderBottom: i < expenses.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
-                                                <div>
-                                                    <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: `${EXPENSE_CATEGORY_COLORS[e.category]}20`, color: EXPENSE_CATEGORY_COLORS[e.category] }}>
-                                                        {EXPENSE_CATEGORY_LABELS[e.category] || e.category}
-                                                    </span>
+                                        {expenses.map((e, i) => {
+                                            const statusColor = e.status === 'approved' ? '#10b981' : e.status === 'rejected' ? '#ef4444' : '#f59e0b';
+                                            return (
+                                                <div key={e._id} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 90px 85px 75px 36px', gap: 8, padding: '10px 0', borderBottom: i < expenses.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                                                    <div>
+                                                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 700, background: `${EXPENSE_CATEGORY_COLORS[e.category] || '#ccc'}20`, color: EXPENSE_CATEGORY_COLORS[e.category] || '#666' }}>
+                                                            {EXPENSE_CATEGORY_LABELS[e.category] || e.category}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: 13, fontWeight: 500 }}>{e.description || '—'}</div>
+                                                        {e.notes && <div style={{ fontSize: 11, color: 'var(--ink-3)', fontStyle: 'italic' }}>{e.notes}</div>}
+                                                        <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                                    </div>
+                                                    <div style={{ fontWeight: 700, fontSize: 14, color: e.status === 'approved' ? '#c62828' : '#999' }}>{fmt(e.amount)}</div>
+                                                    <div>
+                                                        <span style={{ fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 4, background: `${statusColor}15`, color: statusColor, textTransform: 'uppercase' }}>
+                                                            {e.status}
+                                                        </span>
+                                                        {e.status === 'rejected' && e.rejection_reason && <div style={{ fontSize: 9, color: '#ef4444', fontStyle: 'italic' }}>"{e.rejection_reason}"</div>}
+                                                    </div>
+                                                    <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{e.recorded_by?.name || '—'}</div>
+                                                    <div>{canManage && e.status !== 'approved' && <button className="icon-btn" title="Delete" style={{ color: '#c62828' }} onClick={() => doDeleteExpense(e._id)}><Trash2 size={12} /></button>}</div>
                                                 </div>
-                                                <div>
-                                                    <div style={{ fontSize: 13, fontWeight: 500 }}>{e.description || '—'}</div>
-                                                    {e.notes && <div style={{ fontSize: 11, color: 'var(--ink-3)', fontStyle: 'italic' }}>{e.notes}</div>}
-                                                    <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                                                </div>
-                                                <div style={{ fontWeight: 700, fontSize: 14, color: '#c62828' }}>{fmt(e.amount)}</div>
-                                                <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{e.recorded_by?.name || '—'}</div>
-                                                <div>{canManage && <button className="icon-btn" title="Delete" style={{ color: '#c62828' }} onClick={() => doDeleteExpense(e._id)}><Trash2 size={12} /></button>}</div>
-                                            </div>
-                                        ))}
-                                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 12, borderTop: '2px solid var(--border)', marginTop: 4, gap: 16, fontSize: 13, fontWeight: 700 }}>
-                                            <span>Total Expenses:</span>
-                                            <span style={{ color: '#c62828' }}>{fmt(totalExpenses)}</span>
+                                            );
+                                        })}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 12, borderTop: '2px solid var(--border)', marginTop: 4, gap: 16, fontSize: 13, fontWeight: 700 }}>
+                                            {pendingExpenses.length > 0 && (
+                                                <span style={{ fontSize: 11, color: '#f59e0b' }}>Pending: {fmt(pendingExpenses.reduce((s, e) => s + e.amount, 0))}</span>
+                                            )}
+                                            <span>Total Approved Expenses:</span>
+                                            <span style={{ color: '#c62828' }}>{fmt(approvedExpenses)}</span>
                                         </div>
                                     </>
                                 )}
