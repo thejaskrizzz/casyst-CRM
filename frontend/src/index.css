@@ -1257,18 +1257,95 @@ tbody tr:hover td {
    RESPONSIVE
 ─────────────────────────────────────── */
 @media (max-width: 768px) {
-
+  /* Grids */
   .grid-2,
   .grid-3,
   .grid-4 {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
+  /* Shell */
+  .app-shell {
+    flex-direction: column;
+  }
+
+  /* Workspace */
   .workspace {
-    margin-left: var(--rail-w);
+    margin-left: 0;
   }
 
-  .rail-tooltip {
-    display: none;
+  /* Rail (Sidebar Drawer) */
+  .rail {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-xl);
   }
+
+  .rail.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Toolbar */
+  .topbar {
+    padding: 0 16px;
+    height: 54px;
+  }
+  
+  .topbar-title {
+    font-size: 16px;
+  }
+
+  /* Content */
+  .page-body {
+    padding: 16px;
+  }
+
+  /* Modals/Cards */
+  .card, .card-sm, .stat-card {
+    padding: 16px;
+  }
+
+  /* Login Page Split Layout Adjustments */
+  .login-container {
+    flex-direction: column !important;
+  }
+  .login-left, .login-right {
+    width: 100% !important;
+    padding: 24px !important;
+    min-height: auto !important;
+  }
+  .login-left {
+    padding-bottom: 32px !important;
+  }
+  .login-right {
+    flex: none !important;
+  }
+
+  /* Utilities */
+  .mobile-only {
+    display: flex !important;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Base utility state for toggle elements */
+.mobile-only {
+  display: none;
+}
+
+/* Sidebar overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }

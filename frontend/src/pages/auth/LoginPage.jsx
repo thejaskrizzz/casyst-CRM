@@ -40,13 +40,13 @@ export default function LoginPage() {
     };
 
     return (
-        <div style={{
+        <div className="login-container" style={{
             minHeight: '100vh',
             background: 'var(--bg)',
             display: 'flex',
         }}>
             {/* Left panel — branding */}
-            <div style={{
+            <div className="login-left" style={{
                 width: '44%',
                 background: 'var(--ink)',
                 display: 'flex', flexDirection: 'column',
@@ -90,7 +90,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right panel — form */}
-            <div style={{
+            <div className="login-right" style={{
                 flex: 1,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '48px',
@@ -160,7 +160,7 @@ export default function LoginPage() {
                     <p style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
 
                     </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div className="grid-2" style={{ gap: 8  }}>
                         {demos.map(d => (
                             <button
                                 key={d.role}

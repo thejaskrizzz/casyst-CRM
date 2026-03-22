@@ -161,10 +161,10 @@ export default function SalesDashboard() {
             )}
 
             {/* ── Daily & Monthly summary strip ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            <div className="grid-2" style={{ gap: 16, marginBottom: 24  }}>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#29b6f610)', border: '1px solid #5c6bc030' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: ACCENT, marginBottom: 14 }}>📅 Today</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div className="grid-3" style={{ gap: 12  }}>
                         {[
                             { label: 'Follow-ups', value: data.followups_today || 0, color: '#ffa726' },
                             { label: 'Active Leads', value: data.myLeads || 0, color: ACCENT },
@@ -179,7 +179,7 @@ export default function SalesDashboard() {
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#26a69a18,#66bb6a10)', border: '1px solid #26a69a30' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#26a69a', marginBottom: 14 }}>📆 This Month</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div className="grid-3" style={{ gap: 12  }}>
                         {[
                             { label: 'Conversions', value: data.conversions_this_month || 0, color: '#26a69a' },
                             { label: 'Lost', value: data.lost_leads || 0, color: '#ef5350' },
@@ -206,7 +206,7 @@ export default function SalesDashboard() {
 
 
             {/* ── Quote KPI row ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div className="grid-4" style={{ gap: 16, marginBottom: 24  }}>
                 <StatCard label="Total Quotes" value={data.quote_stats?.total || 0} icon={Receipt} color="#7b1fa2" href="/sales/quotes" />
                 <StatCard label="Quote Value" value={fmt(data.quote_stats?.totalValue)} icon={TrendingUp} color="#1976d2" />
                 <StatCard label="Accepted" value={data.quote_stats?.accepted || 0} icon={CheckCircle} color="#2e7d32"
@@ -264,7 +264,7 @@ export default function SalesDashboard() {
 
 
             {/* ── Row: Recent Leads + Recent Quotes ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div className="grid-2" style={{ gap: 20  }}>
                 {/* Recent Leads */}
                 <div className="card">
                     <SectionHeader title="Recent Leads" action="See all" onAction={() => navigate('/sales/leads')} />

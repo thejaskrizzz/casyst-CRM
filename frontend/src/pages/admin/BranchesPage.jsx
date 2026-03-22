@@ -100,7 +100,7 @@ export default function BranchesPage() {
                             <button className="icon-btn" onClick={() => setModal(false)}><X size={14} /></button>
                         </div>
                         <form onSubmit={save}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div className="grid-2" style={{ gap: 14  }}>
                                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                                     <label className="form-label">Company Name *</label>
                                     <input className="form-input" required placeholder="e.g. Mumbai HQ" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />

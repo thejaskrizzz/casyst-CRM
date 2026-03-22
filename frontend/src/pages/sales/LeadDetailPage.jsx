@@ -269,7 +269,7 @@ export default function LeadDetailPage() {
                     {/* Contact Info */}
                     <div className="card">
                         <div className="section-title">Contact Information</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                        <div className="grid-2" style={{ gap: 20  }}>
                             {[
                                 { icon: Phone, label: 'Phone', value: lead.phone },
                                 { icon: Mail, label: 'Email', value: lead.email || '—' },

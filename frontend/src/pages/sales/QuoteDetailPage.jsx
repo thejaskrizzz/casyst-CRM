@@ -282,7 +282,7 @@ function QuoteForm({ initial, isNew, onSave, onCancel, saving, preselectedLead }
 
                 {/* Totals */}
                 <div className="divider" style={{ margin: '16px 0 12px' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="grid-2" style={{ gap: 16  }}>
                     <div className="grid-2" style={{ gap: 12 }}>
                         <div className="form-group" style={{ margin: 0 }}>
                             <label className="form-label">Discount (%)</label>
@@ -526,7 +526,7 @@ export default function QuoteDetailPage() {
                     {/* Client */}
                     <div className="card">
                         <div className="section-title">Client Details</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                        <div className="grid-2" style={{ gap: 20  }}>
                             {[
                                 ['Contact Name', quote.contact_name],
                                 ['Company', quote.company_name || '—'],
@@ -683,7 +683,7 @@ export default function QuoteDetailPage() {
                                     placeholder={`Quote total: ₹${Number(quote.total || 0).toLocaleString('en-IN')}`} />
                                 <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>Leave blank to use the quote total.</div>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div className="grid-2" style={{ gap: 14  }}>
                                 <div className="form-group">
                                     <label className="form-label">Due Date</label>
                                     <input className="form-input" type="date" value={orderForm.due_date}

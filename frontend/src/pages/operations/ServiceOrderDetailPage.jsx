@@ -360,7 +360,7 @@ export default function ServiceOrderDetailPage() {
                                 </button>
                             )}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                        <div className="grid-2" style={{ gap: 18  }}>
                             <LV label="Order ID" value={order.order_id} color="var(--accent)" />
                             <LV label="Client" value={order.client?.company_name} />
                             <LV label="Contact Person" value={order.client?.contact_person} />
@@ -731,7 +731,7 @@ export default function ServiceOrderDetailPage() {
                                     {opsUsers.map(u => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
                                 </select>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div className="grid-2" style={{ gap: 14  }}>
                                 <div className="form-group">
                                     <label className="form-label">Priority</label>
                                     <select className="form-input" value={assignForm.priority} onChange={e => setAssignForm(f => ({ ...f, priority: e.target.value }))}>
@@ -776,7 +776,7 @@ export default function ServiceOrderDetailPage() {
                             </div>
                         )}
                         <form onSubmit={doAddPayment}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div className="grid-2" style={{ gap: 14  }}>
                                 <div className="form-group">
                                     <label className="form-label">Amount (₹) *</label>
                                     <input className="form-input" type="number" min={1} step="0.01" required
@@ -839,7 +839,7 @@ export default function ServiceOrderDetailPage() {
                             );
                         })()}
                         <form onSubmit={doAddExpense}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                            <div className="grid-2" style={{ gap: 14  }}>
                                 <div className="form-group">
                                     <label className="form-label">Category *</label>
                                     <select className="form-input" value={expForm.category} onChange={e => setExpForm(f => ({ ...f, category: e.target.value }))}>

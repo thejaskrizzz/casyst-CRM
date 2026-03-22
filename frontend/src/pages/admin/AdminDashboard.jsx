@@ -310,7 +310,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 1: Lead Trend + Revenue Chart ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Lead Trend — Area */}
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -371,7 +371,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 2: Lead Status Pie + Users Donut + Order Pipeline ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-3" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Lead Status Pie */}
                 <div className="card">
                     <div className="section-title" style={{ marginBottom: 16 }}>Lead Pipeline</div>
@@ -442,7 +442,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 3: Sales Performance + Top Packages ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Sales Performance — grouped bar */}
                 <div className="card">
                     <div style={{ marginBottom: 16 }}>
@@ -503,7 +503,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 4: Ops Completion + Recent Conversions ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div className="grid-2" style={{ gap: 20  }}>
                 {/* Ops Completion */}
                 <div className="card">
                     <div style={{ marginBottom: 16 }}>

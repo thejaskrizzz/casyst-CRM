@@ -113,7 +113,7 @@ export default function AdminAnalytics() {
             </div>
 
             {/* KPI Row 1 — Leads */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="grid-4" style={{ gap: 16, marginBottom: 20  }}>
                 <KPI label="Total Leads" value={kpis.total_leads} icon={Users} color="#5c6bc0" sub={`+${kpis.new_this_month} this month`} />
                 <KPI label="Converted (Month)" value={kpis.converted_this_month} icon={CheckCircle} color="#26a69a" sub={`${kpis.conversion_rate}% rate`} />
                 <KPI label="Total Quotes" value={kpis.total_quotes} icon={Receipt} color="#ffa726" sub={`${kpis.quote_acceptance_rate}% acceptance`} />
@@ -121,7 +121,7 @@ export default function AdminAnalytics() {
             </div>
 
             {/* KPI Row 2 — Revenue */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div className="grid-3" style={{ gap: 16, marginBottom: 24  }}>
                 <KPI label="Total Revenue" value={fmtK(kpis.total_revenue)} icon={DollarSign} color="#2e7d32" trend={revTrend} />
                 <KPI label="Collected" value={fmtK(kpis.total_paid)} icon={Target} color={ACCENT} sub={pct(kpis.total_paid, kpis.total_revenue) + ' collected'} />
                 <KPI label="Balance Due" value={fmtK(kpis.total_balance)} icon={BarChart2} color="#c62828" sub="pending collection" />
@@ -169,7 +169,7 @@ export default function AdminAnalytics() {
             </div>
 
             {/* Charts Row 2 — Status Breakdowns + Source */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-3" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Lead Status Donut */}
                 <div className="card">
                     <div className="section-title" style={{ marginBottom: 16 }}>Lead Pipeline Status</div>

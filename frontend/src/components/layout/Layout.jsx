@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
-import { Search, Bell } from 'lucide-react';
+import { Search, Bell, Menu } from 'lucide-react';
 
 const pageTitles = {
     'dashboard': 'Dashboard',
@@ -12,19 +13,33 @@ const pageTitles = {
     'service-orders': 'Service Orders',
     'clients': 'Clients',
 };
-
 export default function Layout() {
     const { user } = useAuth();
     const location = useLocation();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const segment = location.pathname.split('/').pop();
     const title = pageTitles[segment] || 'Dashboard';
 
     return (
         <div className="app-shell">
-            <Sidebar />
+            {/* Mobile Sidebar Overlay */}
+            <div 
+                className={`sidebar-overlay ${isSidebarOpen ? 'active' : ''}`}
+                onClick={() => setIsSidebarOpen(false)}
+            />
+
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <div className="workspace">
                 {/* Top header */}
                 <header className="topbar">
+                    {/* Mobile Hamburger Menu */}
+                    <button 
+                        className="mobile-only icon-btn" 
+                        style={{ border: 'none', background: 'transparent', marginRight: 8, padding: 0, width: 'auto', color: 'var(--ink)' }}
+                        onClick={() => setIsSidebarOpen(true)}
+                    >
+                        <Menu size={20} />
+                    </button>
                     <span className="topbar-title">{title}</span>
 
                     {/* Top right controls */}

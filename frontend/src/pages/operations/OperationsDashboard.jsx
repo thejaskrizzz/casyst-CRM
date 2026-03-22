@@ -142,10 +142,10 @@ export default function OperationsDashboard() {
             )}
 
             {/* ── Daily & Monthly summary strip ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            <div className="grid-2" style={{ gap: 16, marginBottom: 24  }}>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#1976d210)', border: '1px solid #5c6bc030' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#5c6bc0', marginBottom: 14 }}>📅 Today</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div className="grid-3" style={{ gap: 12  }}>
                         {[
                             { label: 'Due Today', value: data.due_today || 0, color: '#f57c00' },
                             { label: 'Overdue', value: data.overdue_count || 0, color: '#c62828' },
@@ -160,7 +160,7 @@ export default function OperationsDashboard() {
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#2e7d3218,#26a69a10)', border: '1px solid #2e7d3230' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#2e7d32', marginBottom: 14 }}>📆 This Week / Month</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                    <div className="grid-3" style={{ gap: 12  }}>
                         {[
                             { label: 'Completed (Week)', value: data.completed_this_week || 0, color: '#2e7d32' },
                             { label: 'Total Assigned', value: data.assigned_jobs || 0, color: '#5c6bc0' },
@@ -176,13 +176,13 @@ export default function OperationsDashboard() {
             </div>
 
             {/* KPI Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="grid-3" style={{ gap: 16, marginBottom: 20  }}>
                 <StatCard label="Assigned Orders" value={data.assigned_jobs || 0} icon={Briefcase} color="#5c6bc0" href="/operations/service-orders" />
                 <StatCard label="Awaiting Docs" value={data.pending_documents || 0} icon={FileText} color="#1976d2"
                     sub={data.pending_documents > 0 ? 'Needs follow-up' : 'All clear'} href="/operations/service-orders" />
                 <StatCard label="Completed (Week)" value={data.completed_this_week || 0} icon={CheckCircle} color="#2e7d32" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div className="grid-3" style={{ gap: 16, marginBottom: 24  }}>
                 <StatCard label="Due Today" value={data.due_today || 0} icon={AlertTriangle} color="#f57c00" />
                 <StatCard label="Overdue" value={data.overdue_count || 0} icon={Clock} color="#c62828" />
                 <StatCard label="Completion Rate" value={`${data.completion_rate || 0}%`} icon={TrendingUp} color="#26a69a"
@@ -240,7 +240,7 @@ export default function OperationsDashboard() {
             </div>
 
             {/* Row: Status Pipeline + Urgent Jobs + Due Soon */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-3" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Status donut */}
                 <div className="card">
                     <SectionHeader title="Order Pipeline" />

@@ -57,7 +57,7 @@ const navConfig = {
     ],
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
@@ -77,11 +77,16 @@ export default function Sidebar() {
 
     const handleLogout = async () => {
         await logout();
+        if (onClose) onClose();
         navigate('/login');
     };
 
+    const handleNavClick = () => {
+        if (onClose) onClose();
+    };
+
     return (
-        <nav className="rail">
+        <nav className={`rail ${isOpen ? 'mobile-open' : ''}`}>
             {/* Logo */}
             <div style={{ padding: '4px 10px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, flexShrink: 0, overflow: 'hidden', borderRadius: 8, background: settings?.logo_url ? '#ffffff' : 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -102,16 +107,23 @@ export default function Sidebar() {
                     <NavLink
                         key={to}
                         to={to}
+                        onClick={handleNavClick}
                         className={({ isActive }) => `rail-btn${isActive ? ' active' : ''}`}
                     >
                         <Icon />
                         <span>{label}</span>
-
                     </NavLink>
                 ))}
             </div>
 
             <div className="rail-bottom">
+                <button
+                    className="rail-btn mobile-only"
+                    onClick={onClose}
+                    style={{ marginBottom: 4, color: 'var(--s-lost-ink)', background: 'var(--s-lost)', justifyContent: 'center' }}
+                >
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>Close Menu</span>
+                </button>
                 {/* Branch badge for scoped roles */}
                 {user?.branch && ['manager', 'sales', 'operations'].includes(user?.role) && (
                     <div style={{ padding: '6px 14px', marginBottom: 4 }}>

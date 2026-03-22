@@ -171,10 +171,10 @@ export default function ManagerDashboard() {
             )}
 
             {/* ── Daily & Monthly summary strip ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            <div className="grid-2" style={{ gap: 16, marginBottom: 24  }}>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#5c6bc018,#1976d210)', border: '1px solid #5c6bc030' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: ACCENT, marginBottom: 14 }}>📅 Today</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div className="grid-4" style={{ gap: 10  }}>
                         {[
                             { label: 'Total Leads', value: data.total_leads || 0, color: ACCENT },
                             { label: 'Total Clients', value: data.total_clients || 0, color: '#1976d2' },
@@ -190,7 +190,7 @@ export default function ManagerDashboard() {
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg,#26a69a18,#2e7d3210)', border: '1px solid #26a69a30' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: '#26a69a', marginBottom: 14 }}>📆 This Month</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div className="grid-4" style={{ gap: 10  }}>
                         {[
                             { label: 'Conversions', value: data.conversions_this_month || 0, color: '#26a69a' },
                             { label: 'Completed Orders', value: data.completed_orders || 0, color: '#2e7d32' },
@@ -207,7 +207,7 @@ export default function ManagerDashboard() {
             </div>
 
             {/* KPI Row 1 — Lead & Client */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <div className="grid-4" style={{ gap: 16, marginBottom: 16  }}>
                 <StatCard label="Total Leads" value={data.total_leads || 0} icon={TrendingUp} color={ACCENT} href="/manager/leads" />
                 <StatCard label="Conversions (Month)" value={data.conversions_this_month || 0} icon={CheckCircle} color="#26a69a"
                     sub={convRate > 0 ? `${convRate}% rate` : null} />
@@ -216,7 +216,7 @@ export default function ManagerDashboard() {
             </div>
 
             {/* KPI Row 2 — Orders & Quotes */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div className="grid-4" style={{ gap: 16, marginBottom: 24  }}>
                 <StatCard label="Total Orders" value={data.total_orders || 0} icon={Briefcase} color="#7b1fa2" href="/manager/service-orders" />
                 <StatCard label="Completed Orders" value={data.completed_orders || 0} icon={CheckCircle} color="#2e7d32"
                     sub={`${data.ops_rate || 0}% completion rate`} />
@@ -257,7 +257,7 @@ export default function ManagerDashboard() {
             </div>
 
             {/* Row: Sales Performance Bar + Revenue Bar */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Sales Team Performance */}
                 <div className="card">
                     <SectionHeader title="Sales Team Performance" />
@@ -336,7 +336,7 @@ export default function ManagerDashboard() {
             </div>
 
             {/* Row: Lead Pipeline + Order Pipeline + Ops Completion */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }}>
+            <div className="grid-3" style={{ gap: 20, marginBottom: 20  }}>
                 {/* Lead Pipeline Donut */}
                 <div className="card">
                     <SectionHeader title="Lead Pipeline" />

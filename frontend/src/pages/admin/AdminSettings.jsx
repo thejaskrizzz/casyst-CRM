@@ -166,7 +166,7 @@ export default function AdminSettings() {
 
             {/* ── Contact Info ── */}
             <SectionCard icon={Phone} title="Contact Information">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                <div className="grid-2" style={{ gap: '0 20px'  }}>
                     <Field label="Email" required>
                         <input style={inputStyle} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="info@casyst.in" />
                     </Field>
@@ -178,7 +178,7 @@ export default function AdminSettings() {
 
             {/* ── Address ── */}
             <SectionCard icon={MapPin} title="Address">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                <div className="grid-2" style={{ gap: '0 20px'  }}>
                     <Field label="Address Line 1">
                         <input style={inputStyle} value={form.address_line1} onChange={e => set('address_line1', e.target.value)} placeholder="Building, Street" />
                     </Field>
@@ -202,7 +202,7 @@ export default function AdminSettings() {
 
             {/* ── Tax & Registration ── */}
             <SectionCard icon={Hash} title="Tax & Registration">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                <div className="grid-2" style={{ gap: '0 20px'  }}>
                     <Field label="GST Number">
                         <input style={inputStyle} value={form.gst_number} onChange={e => set('gst_number', e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" maxLength={15} />
                     </Field>
@@ -214,7 +214,7 @@ export default function AdminSettings() {
 
             {/* ── Document Preferences ── */}
             <SectionCard icon={FileText} title="Document Preferences">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0 20px' }}>
+                <div className="grid-3" style={{ gap: '0 20px'  }}>
                     <Field label="Currency">
                         <select style={inputStyle} value={form.currency} onChange={e => set('currency', e.target.value)}>
                             <option value="INR">INR — ₹ Indian Rupee</option>
