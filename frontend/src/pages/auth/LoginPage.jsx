@@ -57,10 +57,11 @@ export default function LoginPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
                         width: 36, height: 36, borderRadius: 10,
-                        background: 'rgba(255,255,255,0.12)',
+                        overflow: 'hidden',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 16, fontWeight: 800, color: '#fff',
-                    }}>C</div>
+                    }}>
+                        <img src="/crmhub1.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </div>
                     <span style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>CRM HUB</span>
                 </div>
 
@@ -157,7 +158,7 @@ export default function LoginPage() {
 
                     {/* Demo quick fill */}
                     <p style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                        Quick demo login
+
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                         {demos.map(d => (
