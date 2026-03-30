@@ -73,7 +73,7 @@ export default function ManualInvoicePage() {
 
         const s = settings || {};
         const logoSrc = s.logo_url
-            ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com'}${s.logo_url}`
+            ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com'}${s.logo_url}`
             : null;
         const address = [s.address_line1, s.address_line2, s.city, s.state, s.pincode, s.country].filter(Boolean).join(', ');
         const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
@@ -232,11 +232,11 @@ ${notes ? `<div class="notes-box"><strong>Notes:</strong><br/>${notes}</div>` : 
                 </div>
             </div>
 
-            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20 }}>
                 {/* Invoice Meta */}
                 <div className="card">
                     <div className="section-title">Invoice Details</div>
-                    <div className="grid-2" style={{ gap: 14  }}>
+                    <div className="grid-2" style={{ gap: 14 }}>
                         <div className="form-group">
                             <label className="form-label">Invoice No.</label>
                             <input style={inputStyle} value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
@@ -274,7 +274,7 @@ ${notes ? `<div class="notes-box"><strong>Notes:</strong><br/>${notes}</div>` : 
                             <label className="form-label">Contact Person</label>
                             <input style={inputStyle} value={clientContact} placeholder="John Doe" onChange={e => setClientContact(e.target.value)} />
                         </div>
-                        <div className="grid-2" style={{ gap: 14  }}>
+                        <div className="grid-2" style={{ gap: 14 }}>
                             <div className="form-group">
                                 <label className="form-label">Phone</label>
                                 <input style={inputStyle} value={clientPhone} placeholder="+91 98765 43210" onChange={e => setClientPhone(e.target.value)} />
@@ -312,11 +312,11 @@ ${notes ? `<div class="notes-box"><strong>Notes:</strong><br/>${notes}</div>` : 
                 ))}
             </div>
 
-            <div className="grid-2" style={{ gap: 20  }}>
+            <div className="grid-2" style={{ gap: 20 }}>
                 {/* Notes + discount/tax */}
                 <div className="card">
                     <div className="section-title">Additional Details</div>
-                    <div className="grid-2" style={{ gap: 14  }}>
+                    <div className="grid-2" style={{ gap: 14 }}>
                         <div className="form-group">
                             <label className="form-label">Discount (%)</label>
                             <input style={inputStyle} type="number" min={0} max={100} value={discountPct} onChange={e => setDiscountPct(e.target.value)} />

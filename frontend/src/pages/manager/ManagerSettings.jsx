@@ -108,7 +108,7 @@ export default function ManagerSettings() {
 
     if (loading) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" /></div>;
 
-    const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com';
+    const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com';
 
     return (
         <div style={{ maxWidth: 900, paddingBottom: 40 }}>
@@ -180,7 +180,7 @@ export default function ManagerSettings() {
 
             {/* ── Contact Info ── */}
             <SectionCard icon={Phone} title="Contact Information">
-                <div className="grid-2" style={{ gap: '0 20px'  }}>
+                <div className="grid-2" style={{ gap: '0 20px' }}>
                     <Field label="Email">
                         <input style={inputStyle} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="company@casyst.in" />
                     </Field>
@@ -201,7 +201,7 @@ export default function ManagerSettings() {
 
             {/* ── Tax & Registration ── */}
             <SectionCard icon={Hash} title="Tax & Registration">
-                <div className="grid-2" style={{ gap: '0 20px'  }}>
+                <div className="grid-2" style={{ gap: '0 20px' }}>
                     <Field label="GST Number">
                         <input style={inputStyle} value={form.gst_number} onChange={e => set('gst_number', e.target.value.toUpperCase())} placeholder="22AAAAA0000A1Z5" maxLength={15} />
                     </Field>
@@ -213,7 +213,7 @@ export default function ManagerSettings() {
 
             {/* ── Document Preferences ── */}
             <SectionCard icon={FileText} title="Document Preferences">
-                <div className="grid-2" style={{ gap: '0 20px'  }}>
+                <div className="grid-2" style={{ gap: '0 20px' }}>
                     <Field label="Invoice Number Prefix" helper="Leave blank to use global prefix">
                         <input style={inputStyle} value={form.invoice_prefix} onChange={e => set('invoice_prefix', e.target.value.toUpperCase())} placeholder="e.g. CHN-INV" maxLength={10} />
                     </Field>

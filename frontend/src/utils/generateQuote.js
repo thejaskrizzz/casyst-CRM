@@ -8,32 +8,32 @@ const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { minimumFractio
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
 export function generateQuote(quote, settings) {
-    const s = settings || {};
-    const b = quote?.created_by?.branch || {}; // Branch details taking priority
+  const s = settings || {};
+  const b = quote?.created_by?.branch || {}; // Branch details taking priority
 
-    const prefix = b.quote_prefix || s.quote_prefix || 'QT';
-    const quoteNo = quote.reference_no || `${prefix}-${quote._id?.toString().slice(-6).toUpperCase()}`;
-    
-    // Choose branch logo if it exists, otherwise fallback to global
-    const logoSrcUrl = b.logo_url || s.logo_url;
-    const logoSrc = logoSrcUrl
-        ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com'}${logoSrcUrl}`
-        : null;
+  const prefix = b.quote_prefix || s.quote_prefix || 'QT';
+  const quoteNo = quote.reference_no || `${prefix}-${quote._id?.toString().slice(-6).toUpperCase()}`;
 
-    // Use branch address if available, otherwise global address
-    const address = b.address || [s.address_line1, s.address_line2, s.city, s.state, s.pincode, s.country]
-        .filter(Boolean).join(', ');
+  // Choose branch logo if it exists, otherwise fallback to global
+  const logoSrcUrl = b.logo_url || s.logo_url;
+  const logoSrc = logoSrcUrl
+    ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com'}${logoSrcUrl}`
+    : null;
 
-    // Use branch details if available, otherwise global settings
-    const companyName = b.name || s.company_name || 'Company Name';
-    const companyEmail = b.email || s.email || '';
-    const companyPhone = b.phone || s.phone || '';
-    const tagline = b.tagline || s.tagline || '';
-    const website = b.website || s.website || '';
-    const gstNumber = b.gst_number || s.gst_number || '';
-    const panNumber = b.pan_number || s.pan_number || '';
+  // Use branch address if available, otherwise global address
+  const address = b.address || [s.address_line1, s.address_line2, s.city, s.state, s.pincode, s.country]
+    .filter(Boolean).join(', ');
 
-    const html = `<!DOCTYPE html>
+  // Use branch details if available, otherwise global settings
+  const companyName = b.name || s.company_name || 'Company Name';
+  const companyEmail = b.email || s.email || '';
+  const companyPhone = b.phone || s.phone || '';
+  const tagline = b.tagline || s.tagline || '';
+  const website = b.website || s.website || '';
+  const gstNumber = b.gst_number || s.gst_number || '';
+  const panNumber = b.pan_number || s.pan_number || '';
+
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -109,8 +109,8 @@ export function generateQuote(quote, settings) {
   <div class="header">
     <div class="logo-block">
       ${logoSrc
-            ? `<img src="${logoSrc}" class="logo-img" alt="Logo" />`
-            : `<div class="logo-placeholder">${companyName.charAt(0)}</div>`}
+      ? `<img src="${logoSrc}" class="logo-img" alt="Logo" />`
+      : `<div class="logo-placeholder">${companyName.charAt(0)}</div>`}
       <div>
         <div class="company-name">${companyName}</div>
         <div class="company-sub">${tagline || website}</div>
@@ -238,11 +238,11 @@ export function generateQuote(quote, settings) {
 </body>
 </html>`;
 
-    const win = window.open('', '_blank', 'width=820,height=960,scrollbars=yes');
-    if (win) {
-        win.document.write(html);
-        win.document.close();
-    } else {
-        alert('Pop-up blocked. Please allow pop-ups for this site to download quotations.');
-    }
+  const win = window.open('', '_blank', 'width=820,height=960,scrollbars=yes');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  } else {
+    alert('Pop-up blocked. Please allow pop-ups for this site to download quotations.');
+  }
 }
