@@ -42,7 +42,7 @@ router.get('/me', authorize('manager', 'operations'), async (req, res, next) => 
         if (!req.user.branch) return res.status(404).json({ success: false, message: 'No branch assigned' });
         const branch = await Branch.findById(req.user.branch);
         res.json({ success: true, data: branch });
-    } catch (err) { next(err); }
+    } catch (err) { next(err); }     
 });
 
 // Update own branch details (Manager only)
