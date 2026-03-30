@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Plus, Edit2, Power, Building2 } from 'lucide-react';
+import { Plus, Edit2, Power, Building2, Eye, EyeOff, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const BRANCH_ROLES = ['manager', 'sales', 'operations']; // roles that require a branch
@@ -13,6 +13,9 @@ export default function UsersPage() {
     const [editUser, setEditUser] = useState(null);
     const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'sales', branch: '' });
     const [submitting, setSubmitting] = useState(false);
+    const [showPass, setShowPass] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [showNewPass, setShowNewPass] = useState(false);
 
     const fetchAll = () => {
         setLoading(true);
@@ -30,11 +33,17 @@ export default function UsersPage() {
     const openCreate = () => {
         setEditUser(null);
         setForm({ name: '', email: '', phone: '', password: '', role: 'sales', branch: '' });
+        setNewPassword('');
+        setShowPass(false);
+        setShowNewPass(false);
         setShowModal(true);
     };
     const openEdit = (u) => {
         setEditUser(u);
         setForm({ name: u.name, email: u.email, phone: u.phone || '', password: '', role: u.role, branch: u.branch?._id || u.branch || '' });
+        setNewPassword('');
+        setShowPass(false);
+        setShowNewPass(false);
         setShowModal(true);
     };
 
@@ -46,6 +55,10 @@ export default function UsersPage() {
             if (!editUser) payload.password = form.password;
             if (editUser) await api.put(`/users/${editUser._id}`, payload);
             else await api.post('/users', payload);
+            // If editing and a new password was entered, reset it too
+            if (editUser && newPassword.trim().length >= 6) {
+                await api.patch(`/users/${editUser._id}/reset-password`, { newPassword: newPassword.trim() });
+            }
             setShowModal(false);
             toast.success(editUser ? 'User updated' : 'User created');
             fetchAll();
@@ -103,6 +116,7 @@ export default function UsersPage() {
                                 <td>
                                     <div style={{ display: 'flex', gap: 6 }}>
                                         <button className="icon-btn" onClick={() => openEdit(u)} title="Edit"><Edit2 size={13} /></button>
+                                        <button className="icon-btn" onClick={() => openEdit(u)} title="Reset Password" style={{ color: 'var(--accent)' }}><KeyRound size={13} /></button>
                                         <button className="icon-btn" onClick={() => toggleStatus(u)} title={u.status === 'active' ? 'Deactivate' : 'Activate'} style={{ color: u.status === 'active' ? 'var(--s-lost-ink)' : 'var(--s-active-ink)' }}><Power size={13} /></button>
                                     </div>
                                 </td>
@@ -153,7 +167,46 @@ export default function UsersPage() {
                                 </div>
                             )}
 
-                            {!editUser && <div className="form-group"><label className="form-label">Password *</label><input className="form-input" type="password" required minLength={6} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></div>}
+                            {/* Password field: required on create, optional reset on edit */}
+                            {!editUser ? (
+                                <div className="form-group">
+                                    <label className="form-label">Password *</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            className="form-input"
+                                            type={showPass ? 'text' : 'password'}
+                                            required minLength={6}
+                                            value={form.password}
+                                            onChange={e => setForm({ ...form, password: e.target.value })}
+                                            style={{ paddingRight: 40 }}
+                                        />
+                                        <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', alignItems: 'center' }}>
+                                            {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="form-group">
+                                    <label className="form-label">New Password <span style={{ color: 'var(--ink-3)', fontWeight: 400 }}>(leave blank to keep current)</span></label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            className="form-input"
+                                            type={showNewPass ? 'text' : 'password'}
+                                            placeholder="Enter new password (min 6 chars)"
+                                            minLength={6}
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                            style={{ paddingRight: 40 }}
+                                        />
+                                        <button type="button" onClick={() => setShowNewPass(!showNewPass)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', alignItems: 'center' }}>
+                                            {showNewPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        </button>
+                                    </div>
+                                    {newPassword.length > 0 && newPassword.length < 6 && (
+                                        <div style={{ fontSize: 11, color: 'var(--s-lost-ink)', marginTop: 4 }}>⚠ Password must be at least 6 characters</div>
+                                    )}
+                                </div>
+                            )}
                             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8 }}>
                                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Saving…' : editUser ? 'Save Changes' : 'Create User'}</button>

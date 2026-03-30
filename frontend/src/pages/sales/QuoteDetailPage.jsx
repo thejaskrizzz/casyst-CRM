@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { ArrowLeft, Plus, Trash2, RefreshCw, Edit3, X, Check, AlertCircle, Search, User, Package, Rocket, Calendar, ChevronDown, FileDown } from 'lucide-react';
@@ -341,11 +341,12 @@ export default function QuoteDetailPage() {
     const [searchParams] = useSearchParams();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const isNew = id === 'new';
     const basePath = user.role === 'sales' ? '/sales' : user.role === 'manager' ? '/manager' : '/admin';
 
-    const [quote, setQuote] = useState(null);
-    const [loading, setLoading] = useState(!isNew);
+    const [quote, setQuote] = useState(location.state?.quote || null);
+    const [loading, setLoading] = useState(!isNew && !location.state?.quote);
     const [error, setError] = useState('');
     const [editing, setEditing] = useState(isNew);
     const [saving, setSaving] = useState(false);
@@ -397,7 +398,7 @@ export default function QuoteDetailPage() {
     }, []);
 
     useEffect(() => {
-        if (!isNew) {
+        if (!isNew && !location.state?.quote) {
             setLoading(true);
             Promise.all([
                 api.get(`/quotes/${id}`),
@@ -409,6 +410,9 @@ export default function QuoteDetailPage() {
                 })
                 .catch(e => setError(e.response?.data?.message || 'Failed to load quote info'))
                 .finally(() => setLoading(false));
+        } else if (!isNew && location.state?.quote) {
+            // Fetch settings separately since we already have the quote
+            api.get('/settings').then(r => setSettings(r.data.data)).catch(() => {});
         }
     }, [id]);
 
@@ -417,7 +421,7 @@ export default function QuoteDetailPage() {
         try {
             if (isNew) {
                 const { data } = await api.post('/quotes', form);
-                navigate(`${basePath}/quotes/${data.data._id}`, { replace: true });
+                navigate(`${basePath}/quotes/${data.data._id}`, { replace: true, state: { quote: data.data } });
             } else {
                 const { data } = await api.put(`/quotes/${id}`, form);
                 setQuote(data.data); setEditing(false);
