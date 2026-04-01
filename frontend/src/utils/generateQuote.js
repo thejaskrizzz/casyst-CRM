@@ -17,7 +17,7 @@ export function generateQuote(quote, settings) {
   // Choose branch logo if it exists, otherwise fallback to global
   const logoSrcUrl = b.logo_url || s.logo_url;
   const logoSrc = logoSrcUrl
-    ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com'}${logoSrcUrl}`
+    ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com'}${logoSrcUrl}`
     : null;
 
   // Use branch address if available, otherwise global address

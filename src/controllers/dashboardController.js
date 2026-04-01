@@ -428,6 +428,7 @@ exports.adminDashboard = async (req, res, next) => {
                 total_users: totalUsers, total_leads: totalLeads,
                 total_clients: totalClients, total_service_orders: totalOrders,
                 total_packages: totalPackages, completed_orders: completedOrders,
+                sales_converted: totalOrders,
                 total_collection: financialsAgg[0]?.total_collection || 0,
                 total_expenses: financialsAgg[0]?.total_expenses || 0,
                 total_vendor_charges: financialsAgg[0]?.total_vendor_charges || 0,

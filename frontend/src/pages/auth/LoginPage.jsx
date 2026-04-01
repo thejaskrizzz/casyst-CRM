@@ -12,11 +12,11 @@ const roleRedirect = {
 };
 
 const demos = [
-    // { label: 'Admin', role: 'admin', email: 'admin@casyst.com', pw: 'admin123' },
-    // { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
-    // { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
-    // { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
-    // { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
+    { label: 'Admin', role: 'admin', email: 'admin@casyst.com', pw: 'admin123' },
+    { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
+    { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
+    { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
+    { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
 ];
 
 export default function LoginPage() {
@@ -160,7 +160,7 @@ export default function LoginPage() {
                     <p style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
 
                     </p>
-                    <div className="grid-2" style={{ gap: 8  }}>
+                    <div className="grid-2" style={{ gap: 8 }}>
                         {demos.map(d => (
                             <button
                                 key={d.role}

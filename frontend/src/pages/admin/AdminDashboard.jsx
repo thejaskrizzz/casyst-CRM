@@ -283,16 +283,16 @@ export default function AdminDashboard() {
             {/* ── Financial Row ── */}
             <div className="grid-4 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
                 <div className="card" style={{ background: 'linear-gradient(135deg, #10b98115, #05966905)', border: '1px solid #10b98130' }}>
-                    <StatCard label="Total Collection" value={fmt(data?.total_collection || 0)} icon={DollarSign} color="#10b981" sub="Total approved payments" />
+                    <StatCard label="Collection" value={fmt(data?.total_collection || 0)} icon={DollarSign} color="#10b981" sub="Total approved payments" />
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg, #ef444415, #dc262605)', border: '1px solid #ef444430' }}>
                     <StatCard label="Total Expenses" value={fmt(data?.total_expenses || 0)} icon={TrendingUp} color="#ef4444" sub="Approved expenses" />
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg, #f57c0015, #e6510005)', border: '1px solid #f57c0030' }}>
-                    <StatCard label="Vendor Charges" value={fmt(data?.total_vendor_charges || 0)} icon={Briefcase} color="#f57c00" sub="Approved vendor payouts" />
+                    <StatCard label="Vendor Payments" value={fmt(data?.total_vendor_charges || 0)} icon={Briefcase} color="#f57c00" sub="Approved vendor payouts" />
                 </div>
                 <div className="card" style={{ background: 'linear-gradient(135deg, #6366f115, #4f46e505)', border: '1px solid #6366f130' }}>
-                    <StatCard label="Net Profit" value={fmt(data?.net_revenue || 0)} icon={TrendingUp} color="#6366f1" sub="Collection - Expenses" />
+                    <StatCard label="Revenue |P|" value={fmt(data?.net_revenue || 0)} icon={TrendingUp} color="#6366f1" sub="Collection - Expenses" />
                 </div>
             </div>
 
@@ -303,14 +303,21 @@ export default function AdminDashboard() {
                 <StatCard label="Active Clients" value={data?.total_clients || 0} icon={Briefcase} color="#7b1fa2" />
                 <StatCard label="Service Orders" value={data?.total_service_orders || 0} icon={Activity} color="#f57c00" onClick={() => navigate('/admin/service-orders')} />
             </div>
-            <div className="grid-3 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="grid-4 mb-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
                 <StatCard label="Completed Orders" value={data?.completed_orders || 0} icon={CheckCircle} color="#2e7d32" />
+                <StatCard
+                    label="Sales Converted"
+                    value={data?.sales_converted || 0}
+                    icon={ArrowUpRight}
+                    color="#059669"
+                    sub="Orders raised by sales team"
+                />
                 <StatCard label="Active Packages" value={data?.total_packages || 0} icon={Package} color="#0097a7" onClick={() => navigate('/admin/packages')} />
                 <StatCard label="Conversion Rate" value={`${conversionRate}%`} icon={TrendingUp} color="#7b1fa2" sub={`${completionRate}% order completion`} />
             </div>
 
             {/* ── Row 1: Lead Trend + Revenue Chart ── */}
-            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20 }}>
                 {/* Lead Trend — Area */}
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -371,7 +378,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 2: Lead Status Pie + Users Donut + Order Pipeline ── */}
-            <div className="grid-3" style={{ gap: 20, marginBottom: 20  }}>
+            <div className="grid-3" style={{ gap: 20, marginBottom: 20 }}>
                 {/* Lead Status Pie */}
                 <div className="card">
                     <div className="section-title" style={{ marginBottom: 16 }}>Lead Pipeline</div>
@@ -442,7 +449,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 3: Sales Performance + Top Packages ── */}
-            <div className="grid-2" style={{ gap: 20, marginBottom: 20  }}>
+            <div className="grid-2" style={{ gap: 20, marginBottom: 20 }}>
                 {/* Sales Performance — grouped bar */}
                 <div className="card">
                     <div style={{ marginBottom: 16 }}>
@@ -503,7 +510,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* ── Row 4: Ops Completion + Recent Conversions ── */}
-            <div className="grid-2" style={{ gap: 20  }}>
+            <div className="grid-2" style={{ gap: 20 }}>
                 {/* Ops Completion */}
                 <div className="card">
                     <div style={{ marginBottom: 16 }}>

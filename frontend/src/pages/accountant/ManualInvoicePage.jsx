@@ -73,7 +73,7 @@ export default function ManualInvoicePage() {
 
         const s = settings || {};
         const logoSrc = s.logo_url
-            ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com'}${s.logo_url}`
+            ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com'}${s.logo_url}`
             : null;
         const address = [s.address_line1, s.address_line2, s.city, s.state, s.pincode, s.country].filter(Boolean).join(', ');
         const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';

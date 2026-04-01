@@ -108,7 +108,7 @@ export default function ManagerSettings() {
 
     if (loading) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" /></div>;
 
-    const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm-2.onrender.com';
+    const BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://casyst-crm.onrender.com';
 
     return (
         <div style={{ maxWidth: 900, paddingBottom: 40 }}>

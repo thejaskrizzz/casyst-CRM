@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute, RoleRedirect } from './routes/ProtectedRoute';
+import BackendStatusBar from './components/layout/BackendStatusBar';
 
 // Layout
 import Layout from './components/layout/Layout';
@@ -60,6 +61,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BackendStatusBar />
         <Toaster position="top-right" toastOptions={{
           style: { background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--border)', borderRadius: 10 }
         }} />

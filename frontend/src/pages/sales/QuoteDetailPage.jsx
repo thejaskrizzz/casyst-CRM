@@ -412,6 +412,7 @@ export default function QuoteDetailPage() {
                 .finally(() => setLoading(false));
         } else if (!isNew && location.state?.quote) {
             // Fetch settings separately since we already have the quote
+            setQuote(location.state.quote);
             api.get('/settings').then(r => setSettings(r.data.data)).catch(() => {});
         }
     }, [id]);
@@ -441,6 +442,8 @@ export default function QuoteDetailPage() {
 
     if (loading) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" /></div>;
     if (error) return <div className="empty" style={{ paddingTop: 80 }}><AlertCircle style={{ display: 'block', margin: '0 auto 12px', opacity: 0.3, width: 40 }} /><p>{error}</p></div>;
+    // Catch the transition state where id has changed but quote is not yet set
+    if (!isNew && !quote) return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 80 }}><div className="spinner" /></div>;
 
     // ── CREATE (new) form ──
     if (isNew) {
@@ -509,7 +512,7 @@ export default function QuoteDetailPage() {
                     {canEdit && (
                         <button className="btn btn-outline" onClick={() => setEditing(true)}><Edit3 size={13} /> Edit</button>
                     )}
-                    {quote.status === 'accepted' && (
+                    {quote.status === 'accepted' && !quote.has_order && (
                         <button className="btn btn-primary" style={{ background: '#2e7d32', borderColor: '#2e7d32', gap: 6 }}
                             onClick={() => { setOrderForm({ project_value: quote.total || '', due_date: '', priority: 'medium', project_notes: '' }); setOrderModal(true); }}>
                             <Rocket size={13} /> Create Order

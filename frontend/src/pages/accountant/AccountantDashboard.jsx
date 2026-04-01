@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, XCircle, Clock, DollarSign, TrendingUp, AlertTriangle, FileDown } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, DollarSign, AlertTriangle, FileDown, Building2 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { generateInvoice } from '../../utils/generateInvoice';
@@ -26,22 +26,27 @@ const EXPENSE_CATEGORY_COLORS = { vendor: '#6366f1', govt_fee: '#0891b2', servic
 
 export default function AccountantDashboard() {
     const [orders, setOrders] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranch, setSelectedBranch] = useState('all');
     const [loading, setLoading] = useState(true);
-    const [rejectModal, setRejectModal] = useState(null); // { orderId, paymentId, amount }
-    const [rejectExpenseModal, setRejectExpenseModal] = useState(null); // { orderId, expenseId, amount }
+    const [rejectModal, setRejectModal] = useState(null);
+    const [rejectExpenseModal, setRejectExpenseModal] = useState(null);
     const [rejectReason, setRejectReason] = useState('');
     const [processing, setProcessing] = useState(false);
     const [settings, setSettings] = useState(null);
+    const [detailModal, setDetailModal] = useState(null);
 
     const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
-            const [ordersRes, settingsRes] = await Promise.all([
+            const [ordersRes, settingsRes, branchesRes] = await Promise.all([
                 api.get('/service-orders?limit=200'),
                 api.get('/settings'),
+                api.get('/branches'),
             ]);
             setOrders(ordersRes.data.data || []);
             setSettings(settingsRes.data.data);
+            setBranches((branchesRes.data.data || []).filter(b => b.is_active));
         } catch {
             toast.error('Failed to load service orders');
         } finally {
@@ -51,15 +56,23 @@ export default function AccountantDashboard() {
 
     useEffect(() => { loadOrders(); }, [loadOrders]);
 
+    // Filter orders by selected branch
+    const filteredOrders = selectedBranch === 'all'
+        ? orders
+        : orders.filter(o => {
+            const branchId = o.branch?._id || o.branch;
+            return branchId === selectedBranch;
+        });
+
     // Flatten all payments with order context
-    const allPayments = orders.flatMap(order =>
+    const allPayments = filteredOrders.flatMap(order =>
         (order.payments || []).map(p => ({ ...p, order }))
     );
     const pendingPayments = allPayments.filter(p => p.status === 'pending');
     const pendingValue = pendingPayments.reduce((s, p) => s + p.amount, 0);
 
     // Flatten all expenses with order context
-    const allExpenses = orders.flatMap(order =>
+    const allExpenses = filteredOrders.flatMap(order =>
         (order.expenses || []).map(e => ({ ...e, order }))
     );
     const pendingExpenses = allExpenses.filter(e => e.status === 'pending');
@@ -119,7 +132,24 @@ export default function AccountantDashboard() {
 
     return (
         <div style={{ maxWidth: 1100, paddingBottom: 40 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Accountant Dashboard</h1>
+            {/* Header + Filter Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+                <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Accountant Dashboard</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Building2 size={16} style={{ color: 'var(--ink-3)' }} />
+                    <select
+                        className="form-select"
+                        style={{ minWidth: 200, fontSize: 13 }}
+                        value={selectedBranch}
+                        onChange={e => setSelectedBranch(e.target.value)}
+                    >
+                        <option value="all">All Companies</option>
+                        {branches.map(b => (
+                            <option key={b._id} value={b._id}>{b.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
@@ -165,8 +195,8 @@ export default function AccountantDashboard() {
                             <tbody>
                                 {pendingPayments.map((p) => (
                                     <tr key={p._id} style={{ borderTop: '1px solid var(--border)' }}>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{p.order.client?.company_name || '—'}</div>
+                                        <td style={{ padding: '12px 16px', cursor: 'pointer' }} onClick={() => setDetailModal(p.order)}>
+                                            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--accent)', textDecoration: 'underline dotted' }}>{p.order.client?.company_name || '—'}</div>
                                             <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{p.order.order_id || '—'}</div>
                                         </td>
                                         <td style={{ padding: '12px 16px', fontWeight: 700, color: '#6366f1' }}>{fmt(p.amount)}</td>
@@ -212,8 +242,8 @@ export default function AccountantDashboard() {
                             <tbody>
                                 {pendingExpenses.map((e) => (
                                     <tr key={e._id} style={{ borderTop: '1px solid var(--border)' }}>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{e.order.client?.company_name || '—'}</div>
+                                        <td style={{ padding: '12px 16px', cursor: 'pointer' }} onClick={() => setDetailModal(e.order)}>
+                                            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--accent)', textDecoration: 'underline dotted' }}>{e.order.client?.company_name || '—'}</div>
                                             <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{e.order.order_id || '—'}</div>
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
@@ -281,6 +311,81 @@ export default function AccountantDashboard() {
                     </table>
                 </div>
             </div>
+
+            {/* Client Detail Modal */}
+            {detailModal && (() => {
+                const o = detailModal;
+                const client = o.client || {};
+                const pkg = o.package || {};
+                const approvedPayments = (o.payments || []).filter(p => p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+                const approvedExpenses = (o.expenses || []).filter(e => e.status === 'approved').reduce((s, e) => s + e.amount, 0);
+                const pendingPay = (o.payments || []).filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+                return (
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }} onClick={() => setDetailModal(null)}>
+                        <div className="card" style={{ width: '100%', maxWidth: 540, padding: 0, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                            {/* Header */}
+                            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <div style={{ fontSize: 16, fontWeight: 700 }}>{client.company_name || '—'}</div>
+                                    <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>Order: {o.order_id || '—'} · <span style={{ textTransform: 'capitalize' }}>{o.status}</span></div>
+                                </div>
+                                <button onClick={() => setDetailModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 20, lineHeight: 1 }}>✕</button>
+                            </div>
+                            <div style={{ padding: '20px 24px' }}>
+                                {/* Client Info */}
+                                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Client Info</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', marginBottom: 20 }}>
+                                    {[
+                                        ['Name', client.name || client.company_name || '—'],
+                                        ['Email', client.email || '—'],
+                                        ['Phone', client.phone || '—'],
+                                        ['GST No.', client.gst_number || '—'],
+                                        ['City', client.city || '—'],
+                                        ['State', client.state || '—'],
+                                    ].map(([label, val]) => (
+                                        <div key={label}>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 2 }}>{label}</div>
+                                            <div style={{ fontSize: 13, fontWeight: 500, wordBreak: 'break-word' }}>{val}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Package Info */}
+                                {(pkg.name || o.package_name) && (
+                                    <>
+                                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Package</div>
+                                        <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
+                                            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{pkg.name || o.package_name}</div>
+                                            {pkg.description && <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 6 }}>{pkg.description}</div>}
+                                            <div style={{ display: 'flex', gap: 16 }}>
+                                                {pkg.price != null && <span style={{ fontSize: 12 }}>Price: <strong>{fmt(pkg.price)}</strong></span>}
+                                                {pkg.estimated_days && <span style={{ fontSize: 12 }}>Est. Days: <strong>{pkg.estimated_days}</strong></span>}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Financial Summary */}
+                                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Financial Summary</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                                    {[
+                                        { label: 'Project Value', val: fmt(o.project_value || 0), color: '#6366f1' },
+                                        { label: 'Collected', val: fmt(approvedPayments), color: '#10b981' },
+                                        { label: 'Pending Pay', val: fmt(pendingPay), color: '#f59e0b' },
+                                        { label: 'Expenses', val: fmt(approvedExpenses), color: '#c62828' },
+                                        { label: 'Balance', val: fmt((o.project_value || 0) - approvedPayments), color: '#0891b2' },
+                                    ].map(({ label, val, color }) => (
+                                        <div key={label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '10px 12px' }}>
+                                            <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>{label}</div>
+                                            <div style={{ fontSize: 14, fontWeight: 700, color }}>{val}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Reject Payment Modal */}
             {rejectModal && (

@@ -1,4 +1,5 @@
 const Quote = require('../models/Quote');
+const ServiceOrder = require('../models/ServiceOrder');
 const { logActivity } = require('../utils/activityLogger');
 
 // @desc  Get all quotes (filtered by creator for sales, all for admin/manager)
@@ -46,7 +47,12 @@ exports.getQuote = async (req, res, next) => {
         if (!quote) return res.status(404).json({ success: false, message: 'Quote not found' });
         if (req.user.role === 'sales' && quote.created_by._id.toString() !== req.user._id.toString())
             return res.status(403).json({ success: false, message: 'Access denied' });
-        res.json({ success: true, data: quote });
+
+        const has_order = await ServiceOrder.exists({ quote: quote._id });
+        const quoteObj = quote.toObject();
+        quoteObj.has_order = !!has_order;
+
+        res.json({ success: true, data: quoteObj });
     } catch (err) { next(err); }
 };
 
@@ -54,8 +60,10 @@ exports.getQuote = async (req, res, next) => {
 exports.createQuote = async (req, res, next) => {
     try {
         const { lead, contact_name, contact_email, contact_phone, company_name, items, discount_pct, tax_pct, notes, valid_until } = req.body;
+        const validLead = lead && lead.trim() !== '' ? lead : null;
+        
         const quote = await Quote.create({
-            lead, contact_name, contact_email, contact_phone, company_name,
+            lead: validLead, contact_name, contact_email, contact_phone, company_name,
             items: items || [],
             discount_pct: discount_pct || 0,
             tax_pct: tax_pct ?? 18,

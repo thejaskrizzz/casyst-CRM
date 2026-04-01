@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { Search, Package, MapPin, Calendar, Clock, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { Search, Package, MapPin, Calendar, Clock, AlertCircle, FileText, CheckCircle2, Activity, Users, ArrowRight } from 'lucide-react';
 import api from '../../api/axios';
 
 const STATUS_CONFIG = {
-    pending_documents: { label: 'Pending Documents', color: 'var(--yellow)', icon: FileText },
-    documents_received: { label: 'Documents Received', color: 'var(--blue)', icon: CheckCircle2 },
-    verification: { label: 'Verification', color: 'var(--purple)', icon: Search },
-    gov_submission: { label: 'Gov Submission', color: 'var(--orange)', icon: MapPin },
-    approval_waiting: { label: 'Approval Waiting', color: 'var(--blue)', icon: Clock },
-    completed: { label: 'Completed', color: 'var(--green)', icon: CheckCircle2 },
-    rejected: { label: 'Rejected', color: 'var(--red)', icon: AlertCircle },
-    on_hold: { label: 'On Hold', color: 'var(--ink-3)', icon: AlertCircle }
+    pending_documents: { label: 'Pending Documents', class: 's-pending', icon: FileText },
+    documents_received: { label: 'Documents Received', class: 's-contacted', icon: CheckCircle2 },
+    verification: { label: 'Verification', class: 's-followup', icon: Search },
+    gov_submission: { label: 'Gov Submission', class: 's-new', icon: MapPin },
+    approval_waiting: { label: 'Approval Waiting', class: 's-in_progress', icon: Clock },
+    completed: { label: 'Completed', class: 's-done', icon: CheckCircle2 },
+    rejected: { label: 'Rejected', class: 's-lost', icon: AlertCircle },
+    on_hold: { label: 'On Hold', class: 's-inactive', icon: AlertCircle }
 };
 
 export default function TrackOrderPage() {
@@ -38,157 +38,133 @@ export default function TrackOrderPage() {
     };
 
     return (
-        <div style={{ padding: '40px 24px', maxWidth: 850, margin: '0 auto', minHeight: 'calc(100vh - 64px)' }} className="animate-fade-in-up">
-            <div style={{ marginBottom: 48, textAlign: 'center' }}>
-                <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }} className="gradient-text">
-                    Track Your Order
-                </h1>
-                <p style={{ color: 'var(--ink-3)', fontSize: 16 }}>
-                    Enter your unique Order ID below to view its real-time status and timeline.
-                </p>
+        <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px', minHeight: 'calc(100vh - 64px)' }}>
+            
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+                <div style={{ width: 48, height: 48, background: 'var(--accent-soft)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--accent)' }}>
+                    <Search size={24} />
+                </div>
+                <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-1px', color: 'var(--ink)' }}>Track Your Order</h1>
+                <p style={{ color: 'var(--ink-3)', fontSize: 15, marginTop: 8 }}>Enter your unique Order ID to view real-time status and timeline updates.</p>
             </div>
 
-            <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
-                <form
-                    onSubmit={handleSearch}
-                    style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 600 }}
-                >
-                    <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <Search size={22} style={{ position: 'absolute', left: 20, color: 'var(--ink-3)', zIndex: 10, pointerEvents: 'none' }} />
-                        <input
-                            type="text"
-                            value={orderId}
-                            onChange={(e) => setOrderId(e.target.value.toUpperCase())}
-                            placeholder="e.g. ORD-2026-X8Y9"
-                            className="large-search-input"
-                            autoFocus
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="btn-large-search"
-                        disabled={loading || !orderId.trim()}
-                        style={{ opacity: loading || !orderId.trim() ? 0.7 : 1 }}
-                    >
-                        {loading ? 'Searching...' : 'Track Order'}
-                    </button>
-                </form>
-            </div>
+            <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, marginBottom: order ? 32 : 0, maxWidth: 500, margin: '0 auto 40px' }}>
+                <div className="form-group" style={{ flex: 1, marginBottom: 0, position: 'relative' }}>
+                    <Search size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-4)', pointerEvents: 'none' }} />
+                    <input 
+                        className="form-input" 
+                        style={{ paddingLeft: 44, fontSize: 16, height: 48, borderRadius: 12, textTransform: 'uppercase' }}
+                        placeholder="e.g. ORD-1234..." 
+                        value={orderId}
+                        onChange={e => setOrderId(e.target.value.toUpperCase())}
+                        autoFocus
+                    />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ height: 48, borderRadius: 12, padding: '0 24px', fontSize: 15 }} disabled={loading || !orderId.trim()}>
+                    {loading ? <span className="spinner" style={{ width: 18, height: 18 }} /> : 'Track'}
+                </button>
+            </form>
 
             {error && (
-                <div className="alert alert-error" style={{ marginBottom: 24 }}>
-                    <AlertCircle size={18} />
-                    <span>{error}</span>
+                <div className="card" style={{ background: '#fce4ec', border: '1px solid #f8bbd0', color: '#c62828', display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
+                    <AlertCircle size={20} />
+                    <span style={{ fontWeight: 500 }}>{error}</span>
                 </div>
             )}
 
             {order && (
-                <div className="glass-card animate-slide-in-left" style={{ padding: 32, marginTop: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
-                        <div>
-                            <p style={{ color: 'var(--ink-3)', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 4 }}>
-                                Order Reference
-                            </p>
-                            <h2 style={{ fontSize: 24, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 12 }}>
-                                {order.order_id}
-                                <span className="badge" style={{
-                                    background: STATUS_CONFIG[order.status]?.color + '15',
-                                    color: STATUS_CONFIG[order.status]?.color,
-                                    padding: '6px 14px',
-                                    fontSize: 13,
-                                    borderRadius: 100,
-                                    fontWeight: 600,
-                                    boxShadow: `0 0 10px ${STATUS_CONFIG[order.status]?.color}30`
-                                }}>
+                <div className="animate-fade-in-up">
+                    <div className="card" style={{ marginBottom: 20 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border)', paddingBottom: 20, marginBottom: 20 }}>
+                            <div>
+                                <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--ink-3)', fontWeight: 600, marginBottom: 4 }}>Order Details</div>
+                                <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.5px' }}>{order.order_id}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--ink-3)', fontWeight: 600, marginBottom: 4 }}>Current Status</div>
+                                <span className={`pill pill-${STATUS_CONFIG[order.status]?.class?.split('-')[1] || 'pending'}`} style={{ fontSize: 14 }}>
                                     {STATUS_CONFIG[order.status]?.label || order.status}
                                 </span>
-                            </h2>
+                            </div>
                         </div>
-                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                            <div style={{ color: 'var(--ink-3)', fontSize: 13, fontWeight: 500 }}>Package</div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 16 }}>
-                                <Package size={18} color="var(--primary)" /> {order.package?.name || 'Custom Setup'}
+
+                        <div className="grid-3" style={{ gap: 24, padding: '0 10px' }}>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-3)', fontSize: 13, marginBottom: 8, fontWeight: 500 }}><Package size={14} /> Package</div>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{order.package?.name || 'Custom Package'}</div>
+                            </div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-3)', fontSize: 13, marginBottom: 8, fontWeight: 500 }}><Users size={14} /> Client Info</div>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{order.client?.company_name}</div>
+                                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>{order.client?.contact_person}</div>
+                            </div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-3)', fontSize: 13, marginBottom: 8, fontWeight: 500 }}><Activity size={14} /> Processing Team</div>
+                                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{order.assigned_to?.name || 'Unassigned'}</div>
+                                <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 2 }}>{order.branch?.name || 'Main Office'}</div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Details Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24, marginBottom: 40, background: 'var(--surface)', padding: 20, borderRadius: 12 }}>
-                        <div>
-                            <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--ink-3)', marginBottom: 6, fontWeight: 600 }}>Client</p>
-                            <p style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{order.client?.company_name}</p>
-                            <p style={{ fontSize: 14, color: 'var(--ink-2)' }}>{order.client?.contact_person}</p>
+                    <div className="card">
+                        <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+                            <Activity size={18} style={{ color: 'var(--ink-3)' }} /> Timeline History
                         </div>
-                        <div>
-                            <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--ink-3)', marginBottom: 6, fontWeight: 600 }}>Contact</p>
-                            <p style={{ fontWeight: 500, color: 'var(--ink)' }}>{order.client?.phone}</p>
-                            <p style={{ fontSize: 13, color: 'var(--ink-2)', wordBreak: 'break-all' }}>{order.client?.email}</p>
-                        </div>
-                        <div>
-                            <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--ink-3)', marginBottom: 6, fontWeight: 600 }}>Assigned Team</p>
-                            <p style={{ fontWeight: 600, color: 'var(--ink)' }}>{order.assigned_to?.name || 'Unassigned'}</p>
-                            <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{order.branch?.name || order.branch?.code || 'Main Company'}</p>
-                        </div>
-                    </div>
 
-                    <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Activity size={20} color="var(--primary)" /> Activity Timeline
-                    </h3>
+                        <div style={{ paddingLeft: 12, position: 'relative' }}>
+                            {/* Vertical Line */}
+                            <div style={{ position: 'absolute', left: 24, top: 12, bottom: 24, width: 2, background: 'var(--border)' }} />
+                            
+                            {order.status_history?.slice().reverse().map((sh, i) => {
+                                const conf = STATUS_CONFIG[sh.status];
+                                const Ic = conf?.icon || CheckCircle2;
+                                const isLatest = i === 0;
 
-                    <div className="timeline" style={{ paddingLeft: 12 }}>
-                        {order.status_history?.map((sh, i) => {
-                            const conf = STATUS_CONFIG[sh.status];
-                            const Ic = conf?.icon || CheckCircle2;
-                            const isLatest = i === order.status_history.length - 1;
-
-                            return (
-                                <div key={i} className="timeline-item" style={{
-                                    display: 'flex', gap: 20, marginBottom: 0,
-                                    animation: `fadeInUp 0.4s ease-out ${(order.status_history.length - i) * 0.1}s forwards`,
-                                    opacity: 0,
-                                }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <div style={{
-                                            width: 36, height: 36, borderRadius: '50%',
-                                            background: isLatest ? conf?.color : (conf?.color || 'var(--ink)') + '20',
-                                            color: isLatest ? 'white' : (conf?.color || 'var(--ink)'),
+                                return (
+                                    <div key={i} style={{ display: 'flex', gap: 24, marginBottom: i === order.status_history.length - 1 ? 0 : 32, position: 'relative', zIndex: 1 }}>
+                                        <div style={{ 
+                                            width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                                            background: isLatest ? 'var(--accent)' : 'var(--surface)',
+                                            border: `2px solid ${isLatest ? 'var(--accent)' : 'var(--border-2)'}`,
+                                            color: isLatest ? '#fff' : 'var(--ink-3)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            boxShadow: isLatest ? `0 0 0 6px ${conf?.color}20` : 'none',
-                                            zIndex: 2,
-                                            animation: isLatest && !['completed', 'rejected'].includes(order.status) ? 'pulseGlow 2s infinite' : 'none',
-                                            transform: isLatest ? 'scale(1.1)' : 'scale(1)',
-                                            transition: 'all 0.3s ease'
+                                            boxShadow: isLatest ? '0 0 0 4px var(--accent-soft)' : 'none'
                                         }}>
-                                            <Ic size={18} />
+                                            <Ic size={12} strokeWidth={isLatest ? 3 : 2} />
                                         </div>
-                                        {i !== 0 && ( /* Line goes UP to the previous chronological item (which is higher in UI index based on reverse sort if applicable) */
-                                            <div style={{ width: 2, flex: 1, background: isLatest ? `linear-gradient(to bottom, transparent, var(--border))` : 'var(--border)', minHeight: 40, margin: '8px 0' }} />
-                                        )}
-                                    </div>
-                                    <div style={{ paddingBottom: 32, flex: 1, paddingTop: 6 }}>
-                                        <div style={{ fontWeight: 700, fontSize: 16, color: isLatest ? 'var(--ink)' : 'var(--ink-2)', marginBottom: 4 }}>
-                                            {conf?.label || sh.status}
-                                        </div>
-                                        <div style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            <Calendar size={13} /> {new Date(sh.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                                            <span style={{ margin: '0 4px', color: 'var(--border-strong)' }}>|</span>
-                                            <Users size={13} /> {sh.changed_by?.name || 'System'}
-                                        </div>
-                                        {sh.note && (
-                                            <div style={{ fontSize: 14, color: 'var(--ink-2)', background: 'var(--surface)', borderLeft: `3px solid ${conf?.color || 'var(--border-strong)'}`, padding: '12px 16px', borderRadius: '0 8px 8px 0', marginTop: 8 }}>
-                                                {sh.note}
+                                        
+                                        <div style={{ flex: 1, paddingTop: 2 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                                                <div style={{ fontWeight: isLatest ? 700 : 600, fontSize: 15, color: isLatest ? 'var(--ink)' : 'var(--ink-2)' }}>
+                                                    {conf?.label || sh.status}
+                                                </div>
+                                                <div style={{ fontSize: 12, color: 'var(--ink-3)', background: 'var(--surface-2)', padding: '4px 10px', borderRadius: 999, fontWeight: 500 }}>
+                                                    {new Date(sh.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                                </div>
                                             </div>
-                                        )}
+                                            <div style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: sh.note ? 8 : 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <Users size={12} /> {sh.changed_by?.name || 'System Operator'}
+                                            </div>
+                                            {sh.note && (
+                                                <div style={{ 
+                                                    fontSize: 13, color: 'var(--ink-2)', 
+                                                    background: 'var(--surface-2)', 
+                                                    padding: '12px 16px', borderRadius: 10,
+                                                    borderLeft: `3px solid ${isLatest ? 'var(--accent)' : 'var(--border-strong)'}`
+                                                }}>
+                                                    {sh.note}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+                                );
+                            })}
+                            {(!order.status_history || order.status_history.length === 0) && (
+                                <div style={{ textAlign: 'center', color: 'var(--ink-3)', padding: '20px 0' }}>
+                                    No timeline events recorded.
                                 </div>
-                            );
-                        })}
-                        {(!order.status_history || order.status_history.length === 0) && (
-                            <div style={{ padding: 32, textAlign: 'center', color: 'var(--ink-3)', background: 'var(--surface)', borderRadius: 12 }}>
-                                <AlertCircle size={24} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-                                <p>No timeline events recorded yet.</p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { Search, Bell, Menu } from 'lucide-react';
 
