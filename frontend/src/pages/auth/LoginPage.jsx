@@ -12,11 +12,11 @@ const roleRedirect = {
 };
 
 const demos = [
-    { label: 'Admin', role: 'admin', email: 'admin@casyst.com', pw: 'admin123' },
-    { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
-    { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
-    { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
-    { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
+    // { label: 'Admin', role: 'admin', email: 'admin@casyst.com', pw: 'admin123' },
+    // { label: 'Manager', role: 'manager', email: 'manager@casyst.com', pw: 'manager123' },
+    // { label: 'Sales', role: 'sales', email: 'sales@casyst.com', pw: 'sales123' },
+    // { label: 'Operations', role: 'operations', email: 'ops@casyst.com', pw: 'ops123' },
+    // { label: 'Accountant', role: 'accountant', email: 'accountant@casyst.com', pw: 'accountant123' },
 ];
 
 export default function LoginPage() {
